@@ -1,0 +1,94 @@
+# ----------------------------
+# Vibe Code local data
+# ----------------------------
+.claude/
+*.md
+*.txt
+
+# ----------------------------
+# Local project notes / legacy app workspaces
+# ----------------------------
+a-maze-ing_sentences/
+math_test/
+spelling_test/
+
+# ----------------------------
+# OS / editor noise
+# ----------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+.idea/
+.vscode/
+*.code-workspace
+
+# ----------------------------
+# Logs / temp files
+# ----------------------------
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# ----------------------------
+# Environment / local secrets
+# ----------------------------
+.env
+.env.*
+!.env.example
+*.local
+
+# ----------------------------
+# Node / JS / Vite artifacts
+# ----------------------------
+**/node_modules/
+**/dist/
+**/build/
+**/.vite/
+**/.cache/
+**/coverage/
+**/.eslintcache
+
+# npm / pnpm / yarn debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ----------------------------
+# Python artifacts
+# ----------------------------
+**/__pycache__/
+**/*.py[cod]
+**/*.pyo
+**/*.pyd
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.venv/
+**/venv/
+**/.ipynb_checkpoints/
+
+# ----------------------------
+# TypeScript build metadata
+# ----------------------------
+**/*.tsbuildinfo
+
+# ----------------------------
+# Binary / data blobs
+# ----------------------------
+*.zip
+
+# ----------------------------
+# Optional local model/data outputs
+# (uncomment if generated later)
+# ----------------------------
+# **/models/
+# **/checkpoints/
+# **/artifacts/
+
+
+math_test/delete*
+math_test/sessions*

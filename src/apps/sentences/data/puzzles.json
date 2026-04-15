@@ -1,0 +1,222 @@
+{
+  "document_type": "a_maze_ing_sentences",
+  "puzzles": [
+    {
+      "puzzle_id": "p003_top",
+      "pdf_page": 3,
+      "image_description": "A cat sitting on a mat.",
+      "grid": [
+        ["The", "bat", "is", "a"],
+        ["cat", "rat", "fat", "ham"],
+        ["sat", "on", "is", "a"],
+        ["pan", "a", "mat", "fan"]
+      ],
+      "solution_sentence": "The cat sat on a mat",
+      "solution_words": ["The", "cat", "sat", "on", "a", "mat"],
+      "solution_cells": [
+        { "row": 1, "col": 1 },
+        { "row": 2, "col": 1 },
+        { "row": 3, "col": 1 },
+        { "row": 3, "col": 2 },
+        { "row": 4, "col": 2 },
+        { "row": 4, "col": 3 }
+      ]
+    },
+    {
+      "puzzle_id": "p003_bottom",
+      "pdf_page": 3,
+      "image_description": "A rat wearing a baseball cap.",
+      "grid": [
+        ["The", "van", "is", "a"],
+        ["rat", "had", "jam", "tag"],
+        ["sad", "on", "a", "hat"],
+        ["tap", "nap", "can", "pat"]
+      ],
+      "solution_sentence": "The rat had on a hat",
+      "solution_words": ["The", "rat", "had", "on", "a", "hat"],
+      "solution_cells": [
+        { "row": 1, "col": 1 },
+        { "row": 2, "col": 1 },
+        { "row": 2, "col": 2 },
+        { "row": 3, "col": 2 },
+        { "row": 3, "col": 3 },
+        { "row": 3, "col": 4 }
+      ]
+    },
+    {
+      "puzzle_id": "p005_top",
+      "pdf_page": 5,
+      "image_description": "A hen resting on a bed.",
+      "grid": [
+        ["A", "led", "net", "leg"],
+        ["hen", "is", "on", "my"],
+        ["pen", "let", "web", "bed"],
+        ["yes", "ten", "get", "bet"]
+      ],
+      "solution_sentence": "A hen is on my bed",
+      "solution_words": ["A", "hen", "is", "on", "my", "bed"],
+      "solution_cells": [
+        { "row": 1, "col": 1 },
+        { "row": 2, "col": 1 },
+        { "row": 2, "col": 2 },
+        { "row": 2, "col": 3 },
+        { "row": 2, "col": 4 },
+        { "row": 3, "col": 4 }
+      ]
+    },
+    {
+      "puzzle_id": "p005_bottom",
+      "pdf_page": 5,
+      "image_description": "A veterinarian holding a cat.",
+      "grid": [
+        ["My", "pet", "jet", "den"],
+        ["fed", "is", "pep", "ten"],
+        ["net", "at", "the", "beg"],
+        ["wet", "men", "vet", "yes"]
+      ],
+      "solution_sentence": "My pet is at the vet",
+      "solution_words": ["My", "pet", "is", "at", "the", "vet"],
+      "solution_cells": [
+        { "row": 1, "col": 1 },
+        { "row": 1, "col": 2 },
+        { "row": 2, "col": 2 },
+        { "row": 3, "col": 2 },
+        { "row": 3, "col": 3 },
+        { "row": 4, "col": 3 }
+      ]
+    },
+    {
+      "puzzle_id": "p007_top",
+      "pdf_page": 7,
+      "image_description": "A big pig digging in mud.",
+      "grid": [
+        ["The", "his", "did", "bit"],
+        ["big", "fig", "lip", "rim"],
+        ["pig", "dug", "in", "the"],
+        ["pin", "fit", "mud", "hid"]
+      ],
+      "solution_sentence": "The big pig dug in the mud",
+      "solution_words": ["The", "big", "pig", "dug", "in", "the", "mud"],
+      "solution_cells": [
+        { "row": 1, "col": 1 },
+        { "row": 2, "col": 1 },
+        { "row": 3, "col": 1 },
+        { "row": 3, "col": 2 },
+        { "row": 3, "col": 3 },
+        { "row": 3, "col": 4 },
+        { "row": 4, "col": 4 }
+      ]
+    },
+    {
+      "puzzle_id": "p007_bottom",
+      "pdf_page": 7,
+      "image_description": "A kid sitting with a puppy.",
+      "grid": [
+        ["The", "kit", "hid", "wig"],
+        ["kid", "did", "sit", "with"],
+        ["lid", "rip", "his", "a"],
+        ["dig", "mix", "fin", "pup"]
+      ],
+      "solution_sentence": "The kid did sit with a pup",
+      "solution_words": ["The", "kid", "did", "sit", "with", "a", "pup"],
+      "solution_cells": [
+        { "row": 1, "col": 1 },
+        { "row": 2, "col": 1 },
+        { "row": 2, "col": 2 },
+        { "row": 2, "col": 3 },
+        { "row": 2, "col": 4 },
+        { "row": 3, "col": 4 },
+        { "row": 4, "col": 4 }
+      ]
+    },
+    {
+      "puzzle_id": "p009_top",
+      "pdf_page": 9,
+      "image_description": "A dog hopping on top of a log.",
+      "grid": [
+        ["The", "mop", "pot", "cob"],
+        ["dog", "got", "on", "top"],
+        ["dot", "fox", "of", "a"],
+        ["hop", "pop", "log", "jog"]
+      ],
+      "solution_sentence": "The dog got on top of a log",
+      "solution_words": ["The", "dog", "got", "on", "top", "of", "a", "log"],
+      "solution_cells": [
+        { "row": 1, "col": 1 },
+        { "row": 2, "col": 1 },
+        { "row": 2, "col": 2 },
+        { "row": 2, "col": 3 },
+        { "row": 2, "col": 4 },
+        { "row": 3, "col": 4 },
+        { "row": 3, "col": 3 },
+        { "row": 4, "col": 3 }
+      ]
+    },
+    {
+      "puzzle_id": "p009_bottom",
+      "pdf_page": 9,
+      "image_description": "A fox in a box.",
+      "grid": [
+        ["A", "hot", "job", "cot"],
+        ["fox", "hop", "rod", "mob"],
+        ["got", "in", "a", "box"],
+        ["lot", "not", "sob", "pop"]
+      ],
+      "solution_sentence": "A fox got in a box",
+      "solution_words": ["A", "fox", "got", "in", "a", "box"],
+      "solution_cells": [
+        { "row": 1, "col": 1 },
+        { "row": 2, "col": 1 },
+        { "row": 3, "col": 1 },
+        { "row": 3, "col": 2 },
+        { "row": 3, "col": 3 },
+        { "row": 3, "col": 4 }
+      ]
+    },
+    {
+      "puzzle_id": "p011_top",
+      "pdf_page": 11,
+      "image_description": "A cub in a tub full of suds.",
+      "grid": [
+        ["The", "gum", "sun", "hum"],
+        ["cub", "rub", "pun", "bug"],
+        ["fun", "in", "the", "tub"],
+        ["cup", "run", "mud", "sub"]
+      ],
+      "solution_sentence": "The cub fun in the tub",
+      "solution_words": ["The", "cub", "fun", "in", "the", "tub"],
+      "solution_cells": [
+        { "row": 1, "col": 1 },
+        { "row": 2, "col": 1 },
+        { "row": 3, "col": 1 },
+        { "row": 3, "col": 2 },
+        { "row": 3, "col": 3 },
+        { "row": 3, "col": 4 }
+      ]
+    },
+    {
+      "puzzle_id": "p011_bottom",
+      "pdf_page": 11,
+      "image_description": "A bug sitting on a rug.",
+      "grid": [
+        ["A", "hug", "sun", "rum"],
+        ["bug", "sat", "on", "a"],
+        ["gum", "jug", "pup", "rug"],
+        ["but", "cut", "nut", "dug"]
+      ],
+      "solution_sentence": "A bug sat on a rug",
+      "solution_words": ["A", "bug", "sat", "on", "a", "rug"],
+      "solution_cells": [
+        { "row": 1, "col": 1 },
+        { "row": 2, "col": 1 },
+        { "row": 2, "col": 2 },
+        { "row": 2, "col": 3 },
+        { "row": 2, "col": 4 },
+        { "row": 3, "col": 4 }
+      ]
+    }
+  ],
+  "summary": {
+    "total_puzzles": 10
+  }
+}
