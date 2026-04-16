@@ -2,6 +2,14 @@ import * as tf from "@tensorflow/tfjs";
 
 export const DIGITS = "0123456789";
 
+const BASE_URL = import.meta.env.BASE_URL ?? "/";
+
+function withBaseUrl(path: string) {
+  const normalizedBase = BASE_URL.endsWith("/") ? BASE_URL : `${BASE_URL}/`;
+  const normalizedPath = path.startsWith("/") ? path.slice(1) : path;
+  return `${normalizedBase}${normalizedPath}`;
+}
+
 type ModelCandidate = {
   url: string;
   kind: "graph" | "layers";
@@ -11,13 +19,13 @@ type ModelCandidate = {
 
 const MODEL_CANDIDATES: ModelCandidate[] = [
   {
-    url: "/models/math/candidate_cnn/model.json",
+    url: withBaseUrl("models/math/candidate_cnn/model.json"),
     kind: "graph",
     label: "local_cnn_graph",
     inputMode: "inverted_uint8",
   },
   {
-    url: "/models/math/current_linear/model.json",
+    url: withBaseUrl("models/math/current_linear/model.json"),
     kind: "layers",
     label: "local_linear_fallback",
     inputMode: "inverted_unit_float",
