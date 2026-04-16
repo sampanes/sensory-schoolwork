@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 const STORAGE_KEY = 'wordMazeGameState';
 const CONFIG_KEY = 'wordMazeConfig';
@@ -52,21 +52,21 @@ export function usePersistentGameState(totalPuzzles: number) {
     }
   }, [currentPuzzleIndex, completedPuzzles, isLoaded]);
 
-  const markPuzzleComplete = (index: number) => {
+  const markPuzzleComplete = useCallback((index: number) => {
     setCompletedPuzzles((prev) => new Set([...prev, index]));
-  };
+  }, []);
 
-  const resetAll = () => {
+  const resetAll = useCallback(() => {
     setCurrentPuzzleIndex(0);
     setCompletedPuzzles(new Set());
     localStorage.removeItem(STORAGE_KEY);
-  };
+  }, []);
 
-  const jumpToPuzzle = (index: number) => {
+  const jumpToPuzzle = useCallback((index: number) => {
     if (index >= 0 && index < totalPuzzles) {
       setCurrentPuzzleIndex(index);
     }
-  };
+  }, [totalPuzzles]);
 
   return {
     currentPuzzleIndex,

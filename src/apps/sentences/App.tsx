@@ -156,6 +156,7 @@ const SentencesApp: React.FC = () => {
   };
 
   useEffect(() => {
+    if (isWon) return;
     if (selectedIndices.length === solutionSet.length && selectedIndices.length > 0) {
       const selectedSet = new Set(selectedIndices);
       const solutionSetObj = new Set(solutionSet);
@@ -169,7 +170,7 @@ const SentencesApp: React.FC = () => {
         setTimeout(burst, 250);
       }
     }
-  }, [selectedIndices, solutionSet, currentPuzzleIndex, markPuzzleComplete]);
+  }, [isWon, selectedIndices, solutionSet, currentPuzzleIndex, markPuzzleComplete]);
 
   const resetPuzzle = () => {
     setSelectedIndices([]);
