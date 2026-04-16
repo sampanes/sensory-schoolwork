@@ -3,8 +3,9 @@ import confetti from 'canvas-confetti';
 import { useNavigate } from 'react-router-dom';
 import { PuzzleData } from './types/puzzle';
 import puzzleDataRaw from './data/puzzles.json';
+import { usePersistentGameState, useGameConfig } from './hooks/usePersistentGameState';
 
-const puzzleData = puzzleDataRaw as unknown as PuzzleData;
+const defaultPuzzleData = puzzleDataRaw as unknown as PuzzleData;
 
 /* ------------------------------------------------------------------ */
 /*  SVG connector overlay                                              */
@@ -110,17 +111,40 @@ const Connectors: React.FC<ConnectorsProps> = ({ selectedIndices, gridRefs, cont
 /* ------------------------------------------------------------------ */
 const SentencesApp: React.FC = () => {
   const navigate = useNavigate();
-  const [currentPuzzleIndex, setCurrentPuzzleIndex] = useState(0);
+  const { config } = useGameConfig();
+  const {
+    currentPuzzleIndex,
+    setCurrentPuzzleIndex,
+    completedPuzzles,
+    markPuzzleComplete,
+    resetAll,
+    jumpToPuzzle,
+    isLoaded,
+  } = usePersistentGameState(defaultPuzzleData.puzzles.length);
+
+  const [puzzleData, setPuzzleData] = useState<PuzzleData>(defaultPuzzleData);
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
   const [isWon, setIsWon] = useState(false);
   const [showHint, setShowHint] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [jumpToPuzzleValue, setJumpToPuzzleValue] = useState('');
+
+  // Load master data if configured
+  useEffect(() => {
+    if (config.useMasterData) {
+      fetch('/puzzles-master.json')
+        .then((res) => res.json())
+        .then((data) => setPuzzleData(data as PuzzleData))
+        .catch((err) => console.error('Failed to load master puzzles:', err));
+    }
+  }, [config.useMasterData]);
 
   const currentPuzzle = puzzleData.puzzles[currentPuzzleIndex];
   const gridRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const solutionSet = useMemo(
-    () => currentPuzzle.solution_cells.map((c) => (c.row - 1) * 4 + (c.col - 1)),
+    () => currentPuzzle?.solution_cells.map((c) => (c.row - 1) * 4 + (c.col - 1)) || [],
     [currentPuzzle],
   );
 
@@ -138,13 +162,14 @@ const SentencesApp: React.FC = () => {
       const match = [...selectedSet].every((v) => solutionSetObj.has(v));
       if (match) {
         setIsWon(true);
+        markPuzzleComplete(currentPuzzleIndex);
         const burst = () =>
           confetti({ particleCount: 80, spread: 60, origin: { y: 0.55 }, colors: ['#8b5cf6', '#10b981', '#f59e0b', '#3b82f6'] });
         burst();
         setTimeout(burst, 250);
       }
     }
-  }, [selectedIndices, solutionSet]);
+  }, [selectedIndices, solutionSet, currentPuzzleIndex, markPuzzleComplete]);
 
   const resetPuzzle = () => {
     setSelectedIndices([]);
@@ -154,12 +179,38 @@ const SentencesApp: React.FC = () => {
 
   const nextPuzzle = () => {
     if (currentPuzzleIndex < puzzleData.puzzles.length - 1) {
-      setCurrentPuzzleIndex((p) => p + 1);
+      setCurrentPuzzleIndex(currentPuzzleIndex + 1);
       resetPuzzle();
     }
   };
 
+  const prevPuzzle = () => {
+    if (currentPuzzleIndex > 0) {
+      setCurrentPuzzleIndex(currentPuzzleIndex - 1);
+      resetPuzzle();
+    }
+  };
+
+  const handleJumpToPuzzle = () => {
+    const num = parseInt(jumpToPuzzleValue, 10);
+    if (!isNaN(num) && num >= 1 && num <= puzzleData.puzzles.length) {
+      jumpToPuzzle(num - 1); // Convert to 0-indexed
+      resetPuzzle();
+      setJumpToPuzzleValue('');
+    }
+  };
+
   const isComplete = isWon && currentPuzzleIndex === puzzleData.puzzles.length - 1;
+  const progressPercent = ((currentPuzzleIndex + 1) / puzzleData.puzzles.length) * 100;
+  const completedCount = completedPuzzles.size;
+
+  if (!isLoaded || !currentPuzzle) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 flex items-center justify-center text-white">
+        <p className="text-lg">Loading...</p>
+      </div>
+    );
+  }
 
   if (isComplete) {
     return (
@@ -170,14 +221,14 @@ const SentencesApp: React.FC = () => {
             All Done!
           </h1>
           <p className="text-lg text-slate-300 leading-relaxed">
-            You traced every sentence through the maze. Amazing work!
+            You traced every sentence through the maze. {completedCount === puzzleData.puzzles.length ? 'All puzzles solved!' : `${completedCount} puzzles completed!`}
           </p>
           <div className="flex flex-col gap-3">
             <button
-              onClick={() => { setCurrentPuzzleIndex(0); resetPuzzle(); }}
+              onClick={() => { resetAll(); setCurrentPuzzleIndex(0); resetPuzzle(); }}
               className="px-10 py-4 bg-white text-slate-900 rounded-2xl font-bold text-lg hover:scale-105 active:scale-95 transition-all shadow-xl"
             >
-              Play Again
+              🔄 Start Over
             </button>
             <button
               onClick={() => navigate('/')}
@@ -193,8 +244,71 @@ const SentencesApp: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950/50 to-slate-950 text-slate-100 p-3 md:p-8 font-sans flex flex-col items-center">
+      {/* Reset Confirmation Modal */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 rounded-2xl p-6 max-w-sm border border-slate-800 shadow-2xl">
+            <p className="text-white font-bold text-lg mb-4">Start over and reset all progress?</p>
+            <p className="text-slate-300 text-sm mb-6">This will clear your saved progress and return to puzzle 1.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowResetConfirm(false)}
+                className="flex-1 px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  resetAll();
+                  setCurrentPuzzleIndex(0);
+                  resetPuzzle();
+                  setShowResetConfirm(false);
+                }}
+                className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl transition-colors font-medium"
+              >
+                Reset All
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Jump to Puzzle Modal */}
+      {jumpToPuzzleValue !== '' && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 rounded-2xl p-6 max-w-sm border border-slate-800 shadow-2xl">
+            <p className="text-white font-bold text-lg mb-4">Jump to Puzzle</p>
+            <input
+              type="number"
+              value={jumpToPuzzleValue}
+              onChange={(e) => setJumpToPuzzleValue(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleJumpToPuzzle()}
+              placeholder={`1 to ${puzzleData.puzzles.length}`}
+              min="1"
+              max={puzzleData.puzzles.length}
+              autoFocus
+              className="w-full px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-lg mb-4 focus:outline-none focus:border-indigo-500"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => setJumpToPuzzleValue('')}
+                className="flex-1 px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleJumpToPuzzle}
+                className="flex-1 px-4 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-colors font-medium"
+              >
+                Go
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
-      <header className="w-full max-w-xl flex flex-col items-center mb-5 space-y-2.5 sm:space-y-3">
+      <header className="w-full max-w-2xl flex flex-col items-center mb-5 space-y-2.5 sm:space-y-3">
         <div className="w-full flex justify-between items-center">
           <button
             onClick={() => navigate('/')}
@@ -207,6 +321,9 @@ const SentencesApp: React.FC = () => {
               Puzzle {currentPuzzleIndex + 1} / {puzzleData.puzzles.length}
             </p>
             <h1 className="text-2xl md:text-3xl font-black tracking-tight">Word Maze</h1>
+            <p className="text-slate-400 text-xs mt-1">
+              {completedCount} completed
+            </p>
           </div>
           <button
             onClick={() => setShowHint((h) => !h)}
@@ -216,12 +333,42 @@ const SentencesApp: React.FC = () => {
           </button>
         </div>
 
-        {/* Progress */}
+        {/* Progress bar */}
         <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
           <div
             className="h-full bg-gradient-to-r from-amber-500 to-orange-400 transition-all duration-500"
-            style={{ width: `${(currentPuzzleIndex / puzzleData.puzzles.length) * 100}%` }}
+            style={{ width: `${progressPercent}%` }}
           />
+        </div>
+
+        {/* Navigation and controls */}
+        <div className="w-full flex justify-between items-center gap-2">
+          <button
+            onClick={prevPuzzle}
+            disabled={currentPuzzleIndex === 0}
+            className="px-3 py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 rounded-lg transition-colors text-sm font-medium"
+          >
+            ← Prev
+          </button>
+          <button
+            onClick={() => setJumpToPuzzleValue(String(currentPuzzleIndex + 1))}
+            className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-colors text-xs font-medium"
+          >
+            Jump
+          </button>
+          <button
+            onClick={() => setShowResetConfirm(true)}
+            className="px-3 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-300 rounded-lg transition-colors text-xs font-medium border border-red-500/30"
+          >
+            🔄 Reset
+          </button>
+          <button
+            onClick={nextPuzzle}
+            disabled={currentPuzzleIndex === puzzleData.puzzles.length - 1}
+            className="px-3 py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 rounded-lg transition-colors text-sm font-medium"
+          >
+            Next →
+          </button>
         </div>
       </header>
 
@@ -259,7 +406,7 @@ const SentencesApp: React.FC = () => {
                   ref={(el) => { gridRefs.current[idx] = el; }}
                   onClick={() => toggleCell(idx)}
                   className={`
-                    relative w-[4.5rem] h-[4.5rem] sm:w-[5.5rem] sm:h-[5.5rem] md:w-24 md:h-24
+                    relative w-[4rem] h-[4rem] sm:w-[4.5rem] sm:h-[4.5rem] md:w-24 md:h-24
                     flex flex-col items-center justify-center rounded-2xl
                     font-bold transition-all duration-200 select-none
                     ${isSelected

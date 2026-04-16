@@ -1,6 +1,7 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { generateMathProblems, type MathProblemConfig } from "../apps/math/mathProblems";
+import { useGameConfig } from "../apps/sentences/hooks/usePersistentGameState";
 import {
   getStoredMathDebugBiasFoursEnabled,
   getStoredMathDebugCaptureAllEnabled,
@@ -481,6 +482,7 @@ function ProblemCountSection({
 }
 
 export default function ConfigurationsPage() {
+  const { config, updateConfig } = useGameConfig();
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoiceURI, setSelectedVoiceURI] = useState("");
   const [speechSupported, setSpeechSupported] = useState(false);
@@ -491,6 +493,7 @@ export default function ConfigurationsPage() {
   const [mathConfig, setMathConfig] = useState<MathProblemConfig>(getStoredMathProblemConfig);
   const [mathSetupExpanded, setMathSetupExpanded] = useState(false);
   const [spellingSetupExpanded, setSpellingSetupExpanded] = useState(false);
+  const [sentenceSetupExpanded, setSentenceSetupExpanded] = useState(false);
   const [spellingCustomListEnabled, setSpellingCustomListEnabled] = useState(false);
   const [spellingCustomListEntries, setSpellingCustomListEntries] = useState(parseSpellingCustomList(getStoredSpellingCustomListText()));
   const [spellingCustomListDraft, setSpellingCustomListDraft] = useState("");
@@ -1139,8 +1142,133 @@ export default function ConfigurationsPage() {
           ) : null}
         </section>
 
+        {/* Sentence/Maze Configuration Section */}
+        <section className="mb-6 rounded-[2rem] border border-zinc-200 bg-white p-5 shadow-[0_20px_60px_-45px_rgba(0,0,0,0.35)] sm:p-6">
+          <button
+            type="button"
+            onClick={() => setSentenceSetupExpanded((current) => !current)}
+            className="flex w-full items-start justify-between gap-4 text-left"
+            aria-expanded={sentenceSetupExpanded}
+          >
+            <div>
+              <h2 className="text-xl font-semibold tracking-tight text-zinc-950">A-maze-ing Sentence setup</h2>
+              <p className="mt-1 max-w-xl text-sm leading-relaxed text-zinc-500">
+                Configure word maze puzzle data sources and enable full gauntlet mode.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2 text-xs text-zinc-500">
+                <span className="rounded-full bg-zinc-100 px-3 py-1 font-medium text-zinc-700">
+                  Mode: {config.useMasterData ? "Full Gauntlet (214)" : "Sample Set (10)"}
+                </span>
+                <span className="rounded-full bg-zinc-100 px-3 py-1 font-medium text-zinc-700">
+                  Progress saves automatically
+                </span>
+              </div>
+            </div>
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-zinc-50 text-zinc-600">
+              <svg
+                viewBox="0 0 24 24"
+                className={cn("h-5 w-5 transition-transform", sentenceSetupExpanded ? "rotate-180" : "")}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </div>
+          </button>
+
+          {sentenceSetupExpanded ? (
+            <>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <Link
+                  to="/sentences"
+                  className="rounded-full border border-zinc-950 bg-zinc-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-black"
+                >
+                  Open A-maze-ing Sentences
+                </Link>
+              </div>
+
+              <div className="mt-5 rounded-[1.6rem] border border-zinc-200 bg-zinc-50 p-4">
+                <div className="space-y-4">
+                  {/* Mode Toggle */}
+                  <div>
+                    <h3 className="text-sm font-semibold tracking-tight text-zinc-950">Puzzle Set</h3>
+                    <p className="mt-1 text-xs leading-relaxed text-zinc-600">
+                      Choose between the sample set or the full collection of puzzles.
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => updateConfig({ useMasterData: false })}
+                        className={cn(
+                          "rounded-full border px-4 py-2 text-sm font-semibold transition",
+                          !config.useMasterData
+                            ? "border-zinc-950 bg-zinc-950 text-white"
+                            : "border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"
+                        )}
+                      >
+                        Sample (10 puzzles)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => updateConfig({ useMasterData: true })}
+                        className={cn(
+                          "rounded-full border px-4 py-2 text-sm font-semibold transition",
+                          config.useMasterData
+                            ? "border-zinc-950 bg-zinc-950 text-white"
+                            : "border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"
+                        )}
+                      >
+                        Full Gauntlet (214 puzzles)
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Features Info */}
+                  <div className="rounded-2xl border border-zinc-200 bg-white p-3">
+                    <h4 className="text-xs font-semibold uppercase tracking-widest text-zinc-700">Features</h4>
+                    <ul className="mt-3 space-y-2 text-sm text-zinc-600">
+                      <li className="flex items-start gap-2">
+                        <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-zinc-400" />
+                        <span><strong>Persistent Progress:</strong> Your progress is saved to browser storage and restored on refresh</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-zinc-400" />
+                        <span><strong>Puzzle Navigation:</strong> Use Previous/Next buttons or Jump to go directly to any puzzle</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-zinc-400" />
+                        <span><strong>Reset All:</strong> Click the Reset button to clear progress and start from puzzle 1</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-zinc-400" />
+                        <span><strong>Completion Tracking:</strong> See how many puzzles you've completed in the header</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Info */}
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3">
+                    <p className="text-xs leading-relaxed text-amber-900">
+                      💡 <strong>Tip:</strong> The full gauntlet contains all available word maze puzzles. Your progress saves automatically so you can pause, refresh your browser, and pick up where you left off!
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 flex flex-wrap gap-2">
+                {["Progress auto-saves", "Full puzzles on demand", "Mobile-optimized layout"].map((item) => (
+                  <span key={item} className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-medium text-zinc-600">
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </>
+          ) : null}
+        </section>
+
         <ul className="space-y-4">
-          {rows.filter((row) => row.app !== "Spelling").map((row) => (
+          {rows.filter((row) => row.app !== "Spelling" && row.app !== "A-maze-ing sentences").map((row) => (
             <li key={row.app} className="rounded-[1.6rem] border border-zinc-200 bg-white p-5 shadow-[0_18px_50px_-40px_rgba(0,0,0,0.35)]">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
