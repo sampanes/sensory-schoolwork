@@ -62,3 +62,21 @@ export function parseSpellingCustomList(text: string): SpellingWord[] {
     })
     .filter((entry): entry is SpellingWord => entry !== null);
 }
+
+export function formatSpellingCustomListEntry(entry: SpellingWord) {
+  const word = entry.word.replace(/\s+/g, " ").trim();
+  const sentence = (entry.sentence ?? "").replace(/\s+/g, " ").trim();
+
+  if (!sentence) {
+    return word;
+  }
+
+  return `${word}; ${sentence}`;
+}
+
+export function serializeSpellingCustomList(entries: SpellingWord[]) {
+  return entries
+    .map((entry) => formatSpellingCustomListEntry(entry))
+    .filter(Boolean)
+    .join("\n");
+}

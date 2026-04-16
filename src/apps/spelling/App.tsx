@@ -41,7 +41,11 @@ export default function App() {
   const userUnlockedAudioRef = useRef(false);
   const activeWords = useMemo(() => {
     const customWords = parseSpellingCustomList(getStoredSpellingCustomListText());
-    return getStoredSpellingCustomListEnabled() && customWords.length > 0 ? customWords : [...SPELLING_WORDS];
+    if (customWords.length > 0) {
+      return customWords;
+    }
+
+    return [...SPELLING_WORDS];
   }, []);
   const totalLetters = useMemo(
     () => activeWords.reduce((total, entry) => total + entry.word.length, 0),

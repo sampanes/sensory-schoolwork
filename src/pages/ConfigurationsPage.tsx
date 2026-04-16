@@ -15,9 +15,11 @@ import {
 } from "../utils/speechPreferences";
 import { getStoredMathProblemConfig, setStoredMathProblemConfig } from "../utils/mathPreferences";
 import {
+  formatSpellingCustomListEntry,
   getStoredSpellingCustomListEnabled,
   getStoredSpellingCustomListText,
   parseSpellingCustomList,
+  serializeSpellingCustomList,
   setStoredSpellingCustomListEnabled,
   setStoredSpellingCustomListText,
 } from "../utils/spellingPreferences";
@@ -487,19 +489,30 @@ export default function ConfigurationsPage() {
   const [mathDebugBiasFoursEnabled, setMathDebugBiasFoursEnabled] = useState(false);
   const [mathDebugCaptureRunLength, setMathDebugCaptureRunLengthState] = useState(12);
   const [mathConfig, setMathConfig] = useState<MathProblemConfig>(getStoredMathProblemConfig);
-  const [mathSetupExpanded, setMathSetupExpanded] = useState(true);
+  const [mathSetupExpanded, setMathSetupExpanded] = useState(false);
   const [spellingSetupExpanded, setSpellingSetupExpanded] = useState(false);
   const [spellingCustomListEnabled, setSpellingCustomListEnabled] = useState(false);
-  const [spellingCustomListText, setSpellingCustomListText] = useState("");
+  const [spellingCustomListEntries, setSpellingCustomListEntries] = useState(parseSpellingCustomList(getStoredSpellingCustomListText()));
+  const [spellingCustomListDraft, setSpellingCustomListDraft] = useState("");
   const [expandedSection, setExpandedSection] = useState<MathSectionKey>(null);
+  const spellingCustomListInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     setMathDebugEnabled(getStoredMathDebugEnabled());
     setMathDebugCaptureAllEnabled(getStoredMathDebugCaptureAllEnabled());
     setMathDebugBiasFoursEnabled(getStoredMathDebugBiasFoursEnabled());
     setMathDebugCaptureRunLengthState(getStoredMathDebugCaptureRunLength());
-    setSpellingCustomListEnabled(getStoredSpellingCustomListEnabled());
-    setSpellingCustomListText(getStoredSpellingCustomListText());
+    const storedSpellingEntries = parseSpellingCustomList(getStoredSpellingCustomListText());
+    const storedSpellingEnabled = getStoredSpellingCustomListEnabled();
+
+    setSpellingCustomListEntries(storedSpellingEntries);
+
+    if (storedSpellingEntries.length > 0) {
+      setSpellingCustomListEnabled(true);
+      setStoredSpellingCustomListEnabled(true);
+    } else {
+      setSpellingCustomListEnabled(storedSpellingEnabled);
+    }
   }, []);
 
   useEffect(() => {
@@ -539,10 +552,31 @@ export default function ConfigurationsPage() {
     return voice ? `${voice.name} (${voice.lang})` : "Saved voice not available on this device";
   }, [englishVoices, selectedVoiceURI]);
 
-  const parsedCustomSpellingWords = useMemo(
-    () => parseSpellingCustomList(spellingCustomListText),
-    [spellingCustomListText]
-  );
+  const parsedCustomSpellingWords = spellingCustomListEntries;
+
+  const commitSpellingCustomListEntries = (entries: typeof spellingCustomListEntries) => {
+    setSpellingCustomListEntries(entries);
+    setStoredSpellingCustomListText(serializeSpellingCustomList(entries));
+
+    if (entries.length > 0) {
+      setSpellingCustomListEnabled(true);
+      setStoredSpellingCustomListEnabled(true);
+    }
+  };
+
+  const commitSpellingCustomListDraft = () => {
+    const nextEntry = parseSpellingCustomList(spellingCustomListDraft)[0];
+    if (!nextEntry) {
+      return false;
+    }
+
+    commitSpellingCustomListEntries([...parsedCustomSpellingWords, nextEntry]);
+    setSpellingCustomListDraft("");
+    window.setTimeout(() => {
+      spellingCustomListInputRef.current?.focus();
+    }, 0);
+    return true;
+  };
 
   const generatedMathProblems = useMemo(() => generateMathProblems(mathConfig), [mathConfig]);
 
@@ -918,7 +952,7 @@ export default function ConfigurationsPage() {
                     ? `Custom list: ${parsedCustomSpellingWords.length} words`
                     : "Built-in list"}
                 </span>
-                <span className="rounded-full bg-zinc-100 px-3 py-1 font-medium text-zinc-700">Autosaves while typing</span>
+                <span className="rounded-full bg-zinc-100 px-3 py-1 font-medium text-zinc-700">Bubbles save instantly</span>
               </div>
             </div>
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-zinc-50 text-zinc-600">
@@ -975,8 +1009,8 @@ export default function ConfigurationsPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      setSpellingCustomListText("");
-                      setStoredSpellingCustomListText("");
+                      setSpellingCustomListDraft("");
+                      commitSpellingCustomListEntries([]);
                       setSpellingCustomListEnabled(false);
                       setStoredSpellingCustomListEnabled(false);
                     }}
@@ -989,23 +1023,75 @@ export default function ConfigurationsPage() {
                 <label className="mt-4 block text-sm font-semibold text-zinc-700" htmlFor="spelling-custom-list">
                   Words and optional sentences
                 </label>
-                <textarea
-                  id="spelling-custom-list"
-                  value={spellingCustomListText}
-                  onChange={(event) => {
-                    const nextValue = event.target.value;
-                    setSpellingCustomListText(nextValue);
-                    setStoredSpellingCustomListText(nextValue);
-                  }}
-                  placeholder={"dog\ncat\nmonkey; The monkey climbed the tree."}
-                  className="mt-2 block min-h-48 w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-900 outline-none transition focus:border-zinc-950"
-                  spellCheck={false}
-                />
+                <div className="mt-2 rounded-2xl border border-zinc-300 bg-white px-3 py-3 transition focus-within:border-zinc-950">
+                  {parsedCustomSpellingWords.length > 0 ? (
+                    <div className="mb-3 flex flex-wrap gap-2">
+                      {parsedCustomSpellingWords.map((entry, index) => (
+                        <button
+                          key={`${entry.word}-${index}-${entry.sentence ?? ""}`}
+                          type="button"
+                          onClick={() => {
+                            const nextEntries = parsedCustomSpellingWords.filter((_, entryIndex) => entryIndex !== index);
+                            setSpellingCustomListDraft(formatSpellingCustomListEntry(entry));
+                            commitSpellingCustomListEntries(nextEntries);
+                          }}
+                          className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-left text-xs font-medium text-violet-800 transition hover:border-violet-300 hover:bg-violet-100"
+                          title="Click to bring this entry back into the editor"
+                        >
+                          {formatSpellingCustomListEntry(entry)}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={spellingCustomListInputRef}
+                      id="spelling-custom-list"
+                      type="text"
+                      value={spellingCustomListDraft}
+                      onChange={(event) => {
+                        setSpellingCustomListDraft(event.target.value);
+                      }}
+                      onKeyDown={(event) => {
+                        event.stopPropagation();
+
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          void commitSpellingCustomListDraft();
+                          return;
+                        }
+
+                        if (event.key === "Backspace" && !spellingCustomListDraft && parsedCustomSpellingWords.length > 0) {
+                          event.preventDefault();
+                          const nextEntries = parsedCustomSpellingWords.slice(0, -1);
+                          const poppedEntry = parsedCustomSpellingWords[parsedCustomSpellingWords.length - 1];
+                          setSpellingCustomListDraft(formatSpellingCustomListEntry(poppedEntry));
+                          commitSpellingCustomListEntries(nextEntries);
+                        }
+                      }}
+                      placeholder="Type a word, or word; sentence, then press Enter"
+                      className="block w-full border-0 bg-transparent px-1 py-1 text-sm text-zinc-900 outline-none"
+                      spellCheck={false}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void commitSpellingCustomListDraft();
+                      }}
+                      className="shrink-0 rounded-xl border border-zinc-300 bg-zinc-50 px-3 py-2 text-xs font-semibold text-zinc-700 transition hover:border-zinc-400 hover:bg-zinc-100"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
 
                 <div className="mt-3 text-sm text-zinc-500">
                   {parsedCustomSpellingWords.length > 0
                     ? `Saved ${parsedCustomSpellingWords.length} custom word${parsedCustomSpellingWords.length === 1 ? "" : "s"}.`
-                    : "No custom words saved yet."}
+                    : spellingCustomListDraft
+                      ? "Press Enter to turn the current line into a saved bubble."
+                      : "No custom words saved yet."}
                 </div>
               </div>
 
