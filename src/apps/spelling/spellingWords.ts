@@ -1,6 +1,6 @@
 export type SpellingWord = {
   word: string;
-  sentence: string;
+  sentence?: string;
 };
 
 export const SPELLING_WORDS: readonly SpellingWord[] = [

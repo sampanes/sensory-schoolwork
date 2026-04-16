@@ -14,6 +14,13 @@ import {
   setStoredSpellingVoiceURI,
 } from "../utils/speechPreferences";
 import { getStoredMathProblemConfig, setStoredMathProblemConfig } from "../utils/mathPreferences";
+import {
+  getStoredSpellingCustomListEnabled,
+  getStoredSpellingCustomListText,
+  parseSpellingCustomList,
+  setStoredSpellingCustomListEnabled,
+  setStoredSpellingCustomListText,
+} from "../utils/spellingPreferences";
 import { cn } from "../utils/cn";
 
 type ConfigRow = {
@@ -482,6 +489,8 @@ export default function ConfigurationsPage() {
   const [mathConfig, setMathConfig] = useState<MathProblemConfig>(getStoredMathProblemConfig);
   const [mathSetupExpanded, setMathSetupExpanded] = useState(true);
   const [spellingSetupExpanded, setSpellingSetupExpanded] = useState(false);
+  const [spellingCustomListEnabled, setSpellingCustomListEnabled] = useState(false);
+  const [spellingCustomListText, setSpellingCustomListText] = useState("");
   const [expandedSection, setExpandedSection] = useState<MathSectionKey>(null);
 
   useEffect(() => {
@@ -489,6 +498,8 @@ export default function ConfigurationsPage() {
     setMathDebugCaptureAllEnabled(getStoredMathDebugCaptureAllEnabled());
     setMathDebugBiasFoursEnabled(getStoredMathDebugBiasFoursEnabled());
     setMathDebugCaptureRunLengthState(getStoredMathDebugCaptureRunLength());
+    setSpellingCustomListEnabled(getStoredSpellingCustomListEnabled());
+    setSpellingCustomListText(getStoredSpellingCustomListText());
   }, []);
 
   useEffect(() => {
@@ -527,6 +538,11 @@ export default function ConfigurationsPage() {
     const voice = englishVoices.find((entry) => entry.voiceURI === selectedVoiceURI);
     return voice ? `${voice.name} (${voice.lang})` : "Saved voice not available on this device";
   }, [englishVoices, selectedVoiceURI]);
+
+  const parsedCustomSpellingWords = useMemo(
+    () => parseSpellingCustomList(spellingCustomListText),
+    [spellingCustomListText]
+  );
 
   const generatedMathProblems = useMemo(() => generateMathProblems(mathConfig), [mathConfig]);
 
@@ -897,8 +913,12 @@ export default function ConfigurationsPage() {
                 <span className="rounded-full bg-zinc-100 px-3 py-1 font-medium text-zinc-700">
                   Voice: {speechSupported ? selectedVoiceLabel : "Unavailable"}
                 </span>
-                <span className="rounded-full bg-zinc-100 px-3 py-1 font-medium text-zinc-700">Word lists later</span>
-                <span className="rounded-full bg-zinc-100 px-3 py-1 font-medium text-zinc-700">Pacing later</span>
+                <span className="rounded-full bg-zinc-100 px-3 py-1 font-medium text-zinc-700">
+                  {spellingCustomListEnabled && parsedCustomSpellingWords.length > 0
+                    ? `Custom list: ${parsedCustomSpellingWords.length} words`
+                    : "Built-in list"}
+                </span>
+                <span className="rounded-full bg-zinc-100 px-3 py-1 font-medium text-zinc-700">Autosaves while typing</span>
               </div>
             </div>
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-zinc-50 text-zinc-600">
@@ -924,8 +944,69 @@ export default function ConfigurationsPage() {
                   Open spelling
                 </Link>
                 <span className="rounded-full border border-zinc-200 bg-zinc-50 px-4 py-2 text-sm font-medium text-zinc-600">
-                  More spelling options can land here without adding a second card
+                  One line per word, optional `; sentence` on the same line
                 </span>
+              </div>
+
+              <div className="mt-5 rounded-[1.6rem] border border-zinc-200 bg-zinc-50 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-semibold tracking-tight text-zinc-950">Custom spelling list</h3>
+                    <p className="mt-1 text-sm text-zinc-600">
+                      Type one word per line. Add an optional sentence after `; ` on the same line.
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold text-zinc-700">
+                    {parsedCustomSpellingWords.length} words saved
+                  </div>
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <CompactToggle
+                    active={spellingCustomListEnabled}
+                    activeLabel="Custom list on"
+                    inactiveLabel="Built-in list"
+                    onClick={() => {
+                      const nextValue = !spellingCustomListEnabled;
+                      setSpellingCustomListEnabled(nextValue);
+                      setStoredSpellingCustomListEnabled(nextValue);
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSpellingCustomListText("");
+                      setStoredSpellingCustomListText("");
+                      setSpellingCustomListEnabled(false);
+                      setStoredSpellingCustomListEnabled(false);
+                    }}
+                    className="rounded-full border border-zinc-300 bg-white px-3 py-2 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50"
+                  >
+                    Reset custom list
+                  </button>
+                </div>
+
+                <label className="mt-4 block text-sm font-semibold text-zinc-700" htmlFor="spelling-custom-list">
+                  Words and optional sentences
+                </label>
+                <textarea
+                  id="spelling-custom-list"
+                  value={spellingCustomListText}
+                  onChange={(event) => {
+                    const nextValue = event.target.value;
+                    setSpellingCustomListText(nextValue);
+                    setStoredSpellingCustomListText(nextValue);
+                  }}
+                  placeholder={"dog\ncat\nmonkey; The monkey climbed the tree."}
+                  className="mt-2 block min-h-48 w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-900 outline-none transition focus:border-zinc-950"
+                  spellCheck={false}
+                />
+
+                <div className="mt-3 text-sm text-zinc-500">
+                  {parsedCustomSpellingWords.length > 0
+                    ? `Saved ${parsedCustomSpellingWords.length} custom word${parsedCustomSpellingWords.length === 1 ? "" : "s"}.`
+                    : "No custom words saved yet."}
+                </div>
               </div>
 
               {!speechSupported ? (
@@ -962,7 +1043,7 @@ export default function ConfigurationsPage() {
               )}
 
               <div className="mt-5 flex flex-wrap gap-2">
-                {["core word packs", "speech pacing", "voice practice options"].map((item) => (
+                {["one word per line", "optional ; sentence", "stored on this device"].map((item) => (
                   <span key={item} className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-medium text-zinc-600">
                     {item}
                   </span>

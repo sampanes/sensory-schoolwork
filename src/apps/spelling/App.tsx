@@ -4,10 +4,11 @@ import {
   loadHandwritingModel,
   recognizeCanvas,
 } from "./handwritingModel";
-import { SPELLING_WORDS, TOTAL_LETTERS } from "./spellingWords";
+import { SPELLING_WORDS } from "./spellingWords";
 import WritingCanvas, { type WritingCanvasHandle } from "../../components/WritingCanvas";
 import { cn } from "../../utils/cn";
 import { getPreferredSpellingVoice } from "../../utils/speechPreferences";
+import { getStoredSpellingCustomListEnabled, getStoredSpellingCustomListText, parseSpellingCustomList } from "../../utils/spellingPreferences";
 
 type FeedbackState = "idle" | "success" | "wrong" | "sloppy" | "word";
 
@@ -38,21 +39,29 @@ export default function App() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const lastSpokenAtRef = useRef(0);
   const userUnlockedAudioRef = useRef(false);
+  const activeWords = useMemo(() => {
+    const customWords = parseSpellingCustomList(getStoredSpellingCustomListText());
+    return getStoredSpellingCustomListEnabled() && customWords.length > 0 ? customWords : [...SPELLING_WORDS];
+  }, []);
+  const totalLetters = useMemo(
+    () => activeWords.reduce((total, entry) => total + entry.word.length, 0),
+    [activeWords]
+  );
 
-  const currentWordEntry = SPELLING_WORDS[wordIndex] ?? SPELLING_WORDS[SPELLING_WORDS.length - 1];
+  const currentWordEntry = activeWords[wordIndex] ?? activeWords[activeWords.length - 1];
   const currentWord = currentWordEntry.word;
-  const currentSentence = currentWordEntry.sentence;
+  const currentSentence = currentWordEntry.sentence ?? "";
   const currentLetter = currentWord[letterIndex]?.toUpperCase() ?? "";
 
   const solvedLetters = useMemo(() => {
     if (isFinished) {
-      return TOTAL_LETTERS;
+      return totalLetters;
     }
 
-    return SPELLING_WORDS.slice(0, wordIndex).reduce((total, entry) => total + entry.word.length, 0) + letterIndex;
-  }, [isFinished, letterIndex, wordIndex]);
+    return activeWords.slice(0, wordIndex).reduce((total, entry) => total + entry.word.length, 0) + letterIndex;
+  }, [activeWords, isFinished, letterIndex, totalLetters, wordIndex]);
 
-  const progressValue = Math.round((solvedLetters / TOTAL_LETTERS) * 100);
+  const progressValue = totalLetters > 0 ? Math.round((solvedLetters / totalLetters) * 100) : 0;
   const wordProgressValue = Math.round((letterIndex / currentWord.length) * 100);
 
   const clearCanvas = useCallback(() => {
@@ -224,10 +233,10 @@ export default function App() {
         advanceTimerRef.current = window.setTimeout(() => {
           const nextWordIndex = wordIndex + 1;
 
-          if (nextWordIndex >= SPELLING_WORDS.length) {
+          if (nextWordIndex >= activeWords.length) {
             setIsFinished(true);
             setFeedbackState("success");
-            setFeedbackText("You finished all 20 words. Play again anytime.");
+            setFeedbackText(`You finished all ${activeWords.length} words. Play again anytime.`);
             return;
           }
 
@@ -238,7 +247,7 @@ export default function App() {
           clearCanvas();
 
           if (userUnlockedAudioRef.current) {
-            window.setTimeout(() => speakText(SPELLING_WORDS[nextWordIndex]?.word ?? "", true), 280);
+            window.setTimeout(() => speakText(activeWords[nextWordIndex]?.word ?? "", true), 280);
           }
         }, 1100);
       }
@@ -268,6 +277,7 @@ export default function App() {
     playErrorSound,
     playSuccessSound,
     speakText,
+    activeWords,
     wordIndex,
   ]);
 
@@ -386,7 +396,7 @@ export default function App() {
 
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between gap-2 text-xs font-semibold text-slate-500">
-                <span>{wordIndex + 1}/{SPELLING_WORDS.length}</span>
+                <span>{wordIndex + 1}/{activeWords.length}</span>
                 <span>{Math.max(letterIndex, 0)}/{currentWord.length}</span>
               </div>
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
@@ -424,10 +434,22 @@ export default function App() {
             <button
               type="button"
               onClick={() => {
+                if (!currentSentence) {
+                  setFeedbackState("idle");
+                  setFeedbackText("No sentence was added for this word.");
+                  return;
+                }
+
                 void ensureAudioContext();
                 speakText(currentSentence, true);
               }}
-              className="flex-1 rounded-2xl border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-bold text-violet-700 transition hover:border-violet-300 hover:bg-violet-100"
+              className={cn(
+                "flex-1 rounded-2xl border px-3 py-2 text-sm font-bold transition",
+                currentSentence
+                  ? "border-violet-200 bg-violet-50 text-violet-700 hover:border-violet-300 hover:bg-violet-100"
+                  : "border-slate-200 bg-slate-100 text-slate-400"
+              )}
+              disabled={!currentSentence}
             >
               Sentence
             </button>
