@@ -360,15 +360,23 @@ export default function App() {
   }, [clearBoth]);
 
   const bufferDebugEntry = useCallback((entry: Parameters<typeof saveDebugEntry>[0]) => {
+    if (!debugEnabled) {
+      return;
+    }
+
     void appendDebugSessionEntry(entry).then((count) => {
       setDebugSessionCount(count);
     });
-  }, []);
+  }, [debugEnabled]);
 
   const persistDebugEntry = useCallback((entry: Parameters<typeof saveDebugEntry>[0]) => {
+    if (!debugEnabled) {
+      return;
+    }
+
     bufferDebugEntry(entry);
     void saveDebugEntry(entry);
-  }, [bufferDebugEntry]);
+  }, [bufferDebugEntry, debugEnabled]);
 
   const evaluateCurrentAnswer = useCallback(async () => {
     if (isFinished) {
