@@ -192,9 +192,9 @@ const SentencesApp: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950/50 to-slate-950 text-slate-100 p-4 md:p-8 font-sans flex flex-col items-center">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950/50 to-slate-950 text-slate-100 p-3 md:p-8 font-sans flex flex-col items-center">
       {/* Header */}
-      <header className="w-full max-w-xl flex flex-col items-center mb-6 space-y-3">
+      <header className="w-full max-w-xl flex flex-col items-center mb-5 space-y-2.5 sm:space-y-3">
         <div className="w-full flex justify-between items-center">
           <button
             onClick={() => navigate('/')}
@@ -226,7 +226,7 @@ const SentencesApp: React.FC = () => {
       </header>
 
       {/* Content */}
-      <main className="w-full max-w-xl flex flex-col items-center gap-5">
+      <main className="w-full max-w-xl flex flex-col items-center gap-4 sm:gap-5">
         {/* Hint */}
         <div className={`w-full transition-all duration-300 overflow-hidden ${showHint ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}>
           <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl px-5 py-4 text-center">
@@ -246,7 +246,7 @@ const SentencesApp: React.FC = () => {
             isWon={isWon}
           />
 
-          <div className="grid grid-cols-4 gap-2.5 sm:gap-3 relative z-20">
+          <div className="grid grid-cols-4 gap-2 sm:gap-2.5 relative z-20">
             {currentPuzzle.grid.flat().map((word, idx) => {
               const isSelected = selectedIndices.includes(idx);
               const selectionOrder = selectedIndices.indexOf(idx);
@@ -288,7 +288,7 @@ const SentencesApp: React.FC = () => {
         </div>
 
         {/* Controls */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={resetPuzzle}
             disabled={isWon}
@@ -316,15 +316,15 @@ const SentencesApp: React.FC = () => {
 
         {/* Win card */}
         <div className={`w-full transition-all duration-500 ${isWon ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
-          <div className="bg-emerald-500/10 border border-emerald-500/25 rounded-3xl p-6 text-center space-y-4">
+          <div className="bg-emerald-500/10 border border-emerald-500/25 rounded-3xl p-5 sm:p-6 text-center space-y-3 sm:space-y-4">
             <p className="text-emerald-400 text-sm font-bold uppercase tracking-widest">✨ Maze Solved!</p>
-            <p className="text-white text-xl font-bold leading-relaxed">
+            <p className="text-white text-lg sm:text-xl font-bold leading-relaxed">
               "{currentPuzzle.solution_sentence}"
             </p>
             {currentPuzzleIndex < puzzleData.puzzles.length - 1 && (
               <button
                 onClick={nextPuzzle}
-                className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-black rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-emerald-500/20 text-lg"
+                className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-black rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-emerald-500/20 text-lg"
               >
                 Next Puzzle →
               </button>
