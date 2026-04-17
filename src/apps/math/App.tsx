@@ -233,13 +233,9 @@ export default function App() {
   );
 
   const playSuccessSound = useCallback(() => {
-    if (navigator.vibrate) {
-      navigator.vibrate(18);
-    }
-
     void playTone([
-      { at: 0, duration: 0.1, frequency: 740, gain: 0.035, type: "triangle" },
-      { at: 0.08, duration: 0.15, frequency: 988, gain: 0.045, type: "triangle" },
+      { at: 0, duration: 0.11, frequency: 784, gain: 0.04, type: "triangle" },
+      { at: 0.09, duration: 0.16, frequency: 1175, gain: 0.05, type: "triangle" },
     ]);
   }, [playTone]);
 

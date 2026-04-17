@@ -127,6 +127,7 @@ const SentencesApp: React.FC = () => {
   const [isWon, setIsWon] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showWinMessage, setShowWinMessage] = useState(false);
   const [jumpToPuzzleValue, setJumpToPuzzleValue] = useState('');
 
   // Load master data if configured
@@ -163,6 +164,7 @@ const SentencesApp: React.FC = () => {
       const match = [...selectedSet].every((v) => solutionSetObj.has(v));
       if (match) {
         setIsWon(true);
+        setShowWinMessage(true);
         markPuzzleComplete(currentPuzzleIndex);
         const burst = () =>
           confetti({ particleCount: 80, spread: 60, origin: { y: 0.55 }, colors: ['#8b5cf6', '#10b981', '#f59e0b', '#3b82f6'] });
@@ -172,10 +174,44 @@ const SentencesApp: React.FC = () => {
     }
   }, [isWon, selectedIndices, solutionSet, currentPuzzleIndex, markPuzzleComplete]);
 
+  const playWinFeedback = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      if (navigator.vibrate) {
+        navigator.vibrate([25, 40, 25]);
+      }
+      try {
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioCtx) {
+          const audio = new AudioCtx();
+          const oscillator = audio.createOscillator();
+          const gain = audio.createGain();
+          oscillator.frequency.value = 720;
+          oscillator.type = 'sine';
+          oscillator.connect(gain);
+          gain.connect(audio.destination);
+          gain.gain.value = 0.09;
+          oscillator.start();
+          oscillator.stop(audio.currentTime + 0.12);
+          oscillator.onended = () => audio.close();
+        }
+      } catch (err) {
+        // ignore audio errors
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isWon) return;
+    playWinFeedback();
+    const timeout = window.setTimeout(() => setShowWinMessage(false), 1400);
+    return () => window.clearTimeout(timeout);
+  }, [isWon, playWinFeedback]);
+
   const resetPuzzle = () => {
     setSelectedIndices([]);
     setIsWon(false);
     setShowHint(false);
+    setShowWinMessage(false);
   };
 
   const nextPuzzle = () => {
@@ -244,7 +280,7 @@ const SentencesApp: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950/50 to-slate-950 text-slate-100 p-3 md:p-8 font-sans flex flex-col items-center">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950/50 to-slate-950 text-slate-100 p-3 md:p-6 font-sans flex flex-col items-center">
       {/* Reset Confirmation Modal */}
       {showResetConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -309,7 +345,7 @@ const SentencesApp: React.FC = () => {
       )}
 
       {/* Header */}
-      <header className="w-full max-w-2xl flex flex-col items-center mb-5 space-y-2.5 sm:space-y-3">
+      <header className="w-full max-w-2xl flex flex-col items-center mb-3 space-y-2 sm:space-y-2.5">
         <div className="w-full flex justify-between items-center">
           <button
             onClick={() => navigate('/')}
@@ -347,7 +383,7 @@ const SentencesApp: React.FC = () => {
           <button
             onClick={prevPuzzle}
             disabled={currentPuzzleIndex === 0}
-            className="px-3 py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 rounded-lg transition-colors text-sm font-medium"
+            className="px-3 py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 rounded-lg transition-colors text-xs font-medium"
           >
             ← Prev
           </button>
@@ -366,7 +402,7 @@ const SentencesApp: React.FC = () => {
           <button
             onClick={nextPuzzle}
             disabled={currentPuzzleIndex === puzzleData.puzzles.length - 1}
-            className="px-3 py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 rounded-lg transition-colors text-sm font-medium"
+            className="px-3 py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 rounded-lg transition-colors text-xs font-medium"
           >
             Next →
           </button>
@@ -374,7 +410,7 @@ const SentencesApp: React.FC = () => {
       </header>
 
       {/* Content */}
-      <main className="w-full max-w-xl flex flex-col items-center gap-4 sm:gap-5">
+      <main className="w-full max-w-xl flex flex-col items-center gap-2 sm:gap-2.5">
         {/* Hint */}
         <div className={`w-full transition-all duration-300 overflow-hidden ${showHint ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}>
           <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl px-5 py-4 text-center">
@@ -385,7 +421,7 @@ const SentencesApp: React.FC = () => {
         {/* Grid */}
         <div
           ref={containerRef}
-          className="relative p-3 sm:p-4 bg-slate-900/60 border border-slate-800 rounded-3xl shadow-2xl backdrop-blur-sm"
+          className="relative p-2 sm:p-3 bg-slate-900/60 border border-slate-800 rounded-3xl shadow-2xl backdrop-blur-sm"
         >
           <Connectors
             selectedIndices={selectedIndices}
@@ -436,15 +472,15 @@ const SentencesApp: React.FC = () => {
         </div>
 
         {/* Controls */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1">
           <button
             onClick={resetPuzzle}
             disabled={isWon}
-            className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors disabled:opacity-30 text-sm font-medium"
+            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors disabled:opacity-30 text-xs font-medium"
           >
             Clear All
           </button>
-          <div className="px-5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-slate-400 text-sm font-mono">
+          <div className="px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-slate-400 text-xs font-mono">
             <span className={selectedIndices.length > 0 ? 'text-purple-400' : ''}>{selectedIndices.length}</span>
             <span className="mx-1">/</span>
             <span>{solutionSet.length}</span>
@@ -454,25 +490,29 @@ const SentencesApp: React.FC = () => {
 
         {/* Sentence preview */}
         {selectedIndices.length > 0 && !isWon && (
-          <div className="w-full bg-slate-900/40 border border-slate-800/60 rounded-2xl px-5 py-3 text-center">
-            <p className="text-slate-400 text-xs uppercase tracking-widest mb-1 font-bold">Your sentence</p>
-            <p className="text-slate-200 text-lg italic leading-relaxed">
+          <div className="w-full bg-slate-900/40 border border-slate-800/60 rounded-2xl px-4 py-2 text-center">
+            <p className="text-slate-400 text-[11px] uppercase tracking-[0.3em] mb-1 font-bold">Your sentence</p>
+            <p className="text-slate-200 text-base italic leading-snug">
               {selectedIndices.map((i) => currentPuzzle.grid.flat()[i]).join(' ')}
             </p>
           </div>
         )}
 
         {/* Win card */}
-        <div className={`w-full transition-all duration-500 ${isWon ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
-          <div className="bg-emerald-500/10 border border-emerald-500/25 rounded-3xl p-5 sm:p-6 text-center space-y-3 sm:space-y-4">
-            <p className="text-emerald-400 text-sm font-bold uppercase tracking-widest">✨ Maze Solved!</p>
-            <p className="text-white text-lg sm:text-xl font-bold leading-relaxed">
+        <div className={`w-full relative transition-all duration-500 ${isWon ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
+          {showWinMessage && (
+            <div className="absolute -top-7 left-1/2 -translate-x-1/2 rounded-full bg-slate-950/90 border border-emerald-500/30 px-3 py-1 text-emerald-400 text-[10px] font-bold uppercase tracking-[0.3em] shadow-lg shadow-emerald-500/10 backdrop-blur-sm">
+              ✨ Maze solved!
+            </div>
+          )}
+          <div className="bg-emerald-500/10 border border-emerald-500/25 rounded-3xl p-3 text-center">
+            <p className="text-white text-sm font-bold leading-snug sm:text-base">
               "{currentPuzzle.solution_sentence}"
             </p>
             {currentPuzzleIndex < puzzleData.puzzles.length - 1 && (
               <button
                 onClick={nextPuzzle}
-                className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-black rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-emerald-500/20 text-lg"
+                className="w-full py-2.5 mt-3 bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-black rounded-2xl transition-all hover:scale-[1.01] active:scale-[0.98] shadow-lg shadow-emerald-500/20 text-sm"
               >
                 Next Puzzle →
               </button>
