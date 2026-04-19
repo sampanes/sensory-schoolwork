@@ -3,7 +3,7 @@ import confetti from 'canvas-confetti';
 import { useNavigate } from 'react-router-dom';
 import { PuzzleData } from './types/puzzle';
 import puzzleDataRaw from './data/puzzles.json';
-import { usePersistentGameState, useGameConfig } from './hooks/usePersistentGameState';
+import { usePersistentGameState } from './hooks/usePersistentGameState';
 
 const defaultPuzzleData = puzzleDataRaw as unknown as PuzzleData;
 
@@ -111,7 +111,6 @@ const Connectors: React.FC<ConnectorsProps> = ({ selectedIndices, gridRefs, cont
 /* ------------------------------------------------------------------ */
 const SentencesApp: React.FC = () => {
   const navigate = useNavigate();
-  const { config } = useGameConfig();
   const {
     currentPuzzleIndex,
     setCurrentPuzzleIndex,
@@ -122,24 +121,13 @@ const SentencesApp: React.FC = () => {
     isLoaded,
   } = usePersistentGameState(defaultPuzzleData.puzzles.length);
 
-  const [puzzleData, setPuzzleData] = useState<PuzzleData>(defaultPuzzleData);
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
   const [isWon, setIsWon] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [jumpToPuzzleValue, setJumpToPuzzleValue] = useState('');
 
-  // Load master data if configured
-  useEffect(() => {
-    if (config.useMasterData) {
-      fetch('/puzzles-master.json')
-        .then((res) => res.json())
-        .then((data) => setPuzzleData(data as PuzzleData))
-        .catch((err) => console.error('Failed to load master puzzles:', err));
-    }
-  }, [config.useMasterData]);
-
-  const currentPuzzle = puzzleData.puzzles[currentPuzzleIndex];
+  const currentPuzzle = defaultPuzzleData.puzzles[currentPuzzleIndex];
   const gridRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -178,7 +166,7 @@ const SentencesApp: React.FC = () => {
   };
 
   const nextPuzzle = () => {
-    if (currentPuzzleIndex < puzzleData.puzzles.length - 1) {
+    if (currentPuzzleIndex < defaultPuzzleData.puzzles.length - 1) {
       setCurrentPuzzleIndex(currentPuzzleIndex + 1);
       resetPuzzle();
     }
@@ -200,8 +188,8 @@ const SentencesApp: React.FC = () => {
     }
   };
 
-  const isComplete = isWon && currentPuzzleIndex === puzzleData.puzzles.length - 1;
-  const progressPercent = ((currentPuzzleIndex + 1) / puzzleData.puzzles.length) * 100;
+  const isComplete = isWon && currentPuzzleIndex === defaultPuzzleData.puzzles.length - 1;
+  const progressPercent = ((currentPuzzleIndex + 1) / defaultPuzzleData.puzzles.length) * 100;
   const completedCount = completedPuzzles.size;
 
   if (!isLoaded || !currentPuzzle) {
@@ -221,7 +209,7 @@ const SentencesApp: React.FC = () => {
             All Done!
           </h1>
           <p className="text-lg text-slate-300 leading-relaxed">
-            You traced every sentence through the maze. {completedCount === puzzleData.puzzles.length ? 'All puzzles solved!' : `${completedCount} puzzles completed!`}
+            You traced every sentence through the maze. {completedCount === defaultPuzzleData.puzzles.length ? 'All puzzles solved!' : `${completedCount} puzzles completed!`}
           </p>
           <div className="flex flex-col gap-3">
             <button
@@ -255,7 +243,7 @@ const SentencesApp: React.FC = () => {
           </button>
           <div className="text-center">
             <p className="text-amber-400 font-bold tracking-widest text-[11px] uppercase">
-              Puzzle {currentPuzzleIndex + 1} / {puzzleData.puzzles.length}
+              Puzzle {currentPuzzleIndex + 1} / {defaultPuzzleData.puzzles.length}
             </p>
             <h1 className="text-2xl md:text-3xl font-black tracking-tight">Word Maze</h1>
           </div>
@@ -271,7 +259,7 @@ const SentencesApp: React.FC = () => {
         <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
           <div
             className="h-full bg-gradient-to-r from-amber-500 to-orange-400 transition-all duration-500"
-            style={{ width: `${(currentPuzzleIndex / puzzleData.puzzles.length) * 100}%` }}
+            style={{ width: `${(currentPuzzleIndex / defaultPuzzleData.puzzles.length) * 100}%` }}
           />
         </div>
       </header>
@@ -372,7 +360,7 @@ const SentencesApp: React.FC = () => {
             <p className="text-white text-lg sm:text-xl font-bold leading-relaxed">
               "{currentPuzzle.solution_sentence}"
             </p>
-            {currentPuzzleIndex < puzzleData.puzzles.length - 1 && (
+            {currentPuzzleIndex < defaultPuzzleData.puzzles.length - 1 && (
               <button
                 onClick={nextPuzzle}
                 className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-black rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-emerald-500/20 text-lg"

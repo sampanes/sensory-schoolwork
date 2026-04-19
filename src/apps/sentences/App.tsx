@@ -3,7 +3,7 @@ import confetti from 'canvas-confetti';
 import { useNavigate } from 'react-router-dom';
 import { PuzzleData } from './types/puzzle';
 import puzzleDataRaw from './data/puzzles.json';
-import { usePersistentGameState, useGameConfig } from './hooks/usePersistentGameState';
+import { usePersistentGameState } from './hooks/usePersistentGameState';
 
 const defaultPuzzleData = puzzleDataRaw as unknown as PuzzleData;
 
@@ -111,7 +111,6 @@ const Connectors: React.FC<ConnectorsProps> = ({ selectedIndices, gridRefs, cont
 /* ------------------------------------------------------------------ */
 const SentencesApp: React.FC = () => {
   const navigate = useNavigate();
-  const { config } = useGameConfig();
   const {
     currentPuzzleIndex,
     setCurrentPuzzleIndex,
@@ -122,7 +121,6 @@ const SentencesApp: React.FC = () => {
     isLoaded,
   } = usePersistentGameState(defaultPuzzleData.puzzles.length);
 
-  const [puzzleData, setPuzzleData] = useState<PuzzleData>(defaultPuzzleData);
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
   const [isWon, setIsWon] = useState(false);
   const [showHint, setShowHint] = useState(false);
@@ -130,17 +128,7 @@ const SentencesApp: React.FC = () => {
   const [showWinMessage, setShowWinMessage] = useState(false);
   const [jumpToPuzzleValue, setJumpToPuzzleValue] = useState('');
 
-  // Load master data if configured
-  useEffect(() => {
-    if (config.useMasterData) {
-      fetch('/puzzles-master.json')
-        .then((res) => res.json())
-        .then((data) => setPuzzleData(data as PuzzleData))
-        .catch((err) => console.error('Failed to load master puzzles:', err));
-    }
-  }, [config.useMasterData]);
-
-  const currentPuzzle = puzzleData.puzzles[currentPuzzleIndex];
+  const currentPuzzle = defaultPuzzleData.puzzles[currentPuzzleIndex];
   const gridRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -215,7 +203,7 @@ const SentencesApp: React.FC = () => {
   };
 
   const nextPuzzle = () => {
-    if (currentPuzzleIndex < puzzleData.puzzles.length - 1) {
+    if (currentPuzzleIndex < defaultPuzzleData.puzzles.length - 1) {
       setCurrentPuzzleIndex(currentPuzzleIndex + 1);
       resetPuzzle();
     }
@@ -230,15 +218,15 @@ const SentencesApp: React.FC = () => {
 
   const handleJumpToPuzzle = () => {
     const num = parseInt(jumpToPuzzleValue, 10);
-    if (!isNaN(num) && num >= 1 && num <= puzzleData.puzzles.length) {
+    if (!isNaN(num) && num >= 1 && num <= defaultPuzzleData.puzzles.length) {
       jumpToPuzzle(num - 1); // Convert to 0-indexed
       resetPuzzle();
       setJumpToPuzzleValue('');
     }
   };
 
-  const isComplete = isWon && currentPuzzleIndex === puzzleData.puzzles.length - 1;
-  const progressPercent = ((currentPuzzleIndex + 1) / puzzleData.puzzles.length) * 100;
+  const isComplete = isWon && currentPuzzleIndex === defaultPuzzleData.puzzles.length - 1;
+  const progressPercent = ((currentPuzzleIndex + 1) / defaultPuzzleData.puzzles.length) * 100;
   const completedCount = completedPuzzles.size;
 
   if (!isLoaded || !currentPuzzle) {
@@ -258,7 +246,7 @@ const SentencesApp: React.FC = () => {
             All Done!
           </h1>
           <p className="text-lg text-slate-300 leading-relaxed">
-            You traced every sentence through the maze. {completedCount === puzzleData.puzzles.length ? 'All puzzles solved!' : `${completedCount} puzzles completed!`}
+            You traced every sentence through the maze. {completedCount === defaultPuzzleData.puzzles.length ? 'All puzzles solved!' : `${completedCount} puzzles completed!`}
           </p>
           <div className="flex flex-col gap-3">
             <button
@@ -320,9 +308,9 @@ const SentencesApp: React.FC = () => {
               value={jumpToPuzzleValue}
               onChange={(e) => setJumpToPuzzleValue(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleJumpToPuzzle()}
-              placeholder={`1 to ${puzzleData.puzzles.length}`}
+              placeholder={`1 to ${defaultPuzzleData.puzzles.length}`}
               min="1"
-              max={puzzleData.puzzles.length}
+              max={defaultPuzzleData.puzzles.length}
               autoFocus
               className="w-full px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-lg mb-4 focus:outline-none focus:border-indigo-500"
             />
@@ -355,7 +343,7 @@ const SentencesApp: React.FC = () => {
           </button>
           <div className="text-center">
             <p className="text-amber-400 font-bold tracking-widest text-[11px] uppercase">
-              Puzzle {currentPuzzleIndex + 1} / {puzzleData.puzzles.length}
+              Puzzle {currentPuzzleIndex + 1} / {defaultPuzzleData.puzzles.length}
             </p>
             <h1 className="text-2xl md:text-3xl font-black tracking-tight">Word Maze</h1>
             <p className="text-slate-400 text-xs mt-1">
@@ -401,7 +389,7 @@ const SentencesApp: React.FC = () => {
           </button>
           <button
             onClick={nextPuzzle}
-            disabled={currentPuzzleIndex === puzzleData.puzzles.length - 1}
+            disabled={currentPuzzleIndex === defaultPuzzleData.puzzles.length - 1}
             className="px-3 py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 rounded-lg transition-colors text-xs font-medium"
           >
             Next →
@@ -509,7 +497,7 @@ const SentencesApp: React.FC = () => {
             <p className="text-white text-sm font-bold leading-snug sm:text-base">
               "{currentPuzzle.solution_sentence}"
             </p>
-            {currentPuzzleIndex < puzzleData.puzzles.length - 1 && (
+            {currentPuzzleIndex < defaultPuzzleData.puzzles.length - 1 && (
               <button
                 onClick={nextPuzzle}
                 className="w-full py-2.5 mt-3 bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-black rounded-2xl transition-all hover:scale-[1.01] active:scale-[0.98] shadow-lg shadow-emerald-500/20 text-sm"

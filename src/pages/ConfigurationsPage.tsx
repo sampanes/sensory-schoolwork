@@ -482,7 +482,7 @@ function ProblemCountSection({
 }
 
 export default function ConfigurationsPage() {
-  const { config, updateConfig } = useGameConfig();
+  useGameConfig();
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoiceURI, setSelectedVoiceURI] = useState("");
   const [speechSupported, setSpeechSupported] = useState(false);
@@ -1166,11 +1166,11 @@ export default function ConfigurationsPage() {
             <div>
               <h2 className="text-xl font-semibold tracking-tight text-zinc-950">A-maze-ing Sentence setup</h2>
               <p className="mt-1 max-w-xl text-sm leading-relaxed text-zinc-500">
-                Configure word maze puzzle data sources and enable full gauntlet mode.
+                The sentence page always uses the full master puzzle list from `puzzles.json`.
               </p>
               <div className="mt-3 flex flex-wrap gap-2 text-xs text-zinc-500">
                 <span className="rounded-full bg-zinc-100 px-3 py-1 font-medium text-zinc-700">
-                  Mode: {config.useMasterData ? "Full Gauntlet (214)" : "Sample Set (10)"}
+                  Source: full `puzzles.json`
                 </span>
                 <span className="rounded-full bg-zinc-100 px-3 py-1 font-medium text-zinc-700">
                   Progress saves automatically
@@ -1203,37 +1203,13 @@ export default function ConfigurationsPage() {
 
               <div className="mt-5 rounded-[1.6rem] border border-zinc-200 bg-zinc-50 p-4">
                 <div className="space-y-4">
-                  {/* Mode Toggle */}
                   <div>
-                    <h3 className="text-sm font-semibold tracking-tight text-zinc-950">Puzzle Set</h3>
+                    <h3 className="text-sm font-semibold tracking-tight text-zinc-950">Puzzle Source</h3>
                     <p className="mt-1 text-xs leading-relaxed text-zinc-600">
-                      Choose between the sample set or the full collection of puzzles.
+                      This app reads the full sentence master list directly from `src/apps/sentences/data/puzzles.json`.
                     </p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => updateConfig({ useMasterData: false })}
-                        className={cn(
-                          "rounded-full border px-4 py-2 text-sm font-semibold transition",
-                          !config.useMasterData
-                            ? "border-zinc-950 bg-zinc-950 text-white"
-                            : "border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"
-                        )}
-                      >
-                        Sample (10 puzzles)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => updateConfig({ useMasterData: true })}
-                        className={cn(
-                          "rounded-full border px-4 py-2 text-sm font-semibold transition",
-                          config.useMasterData
-                            ? "border-zinc-950 bg-zinc-950 text-white"
-                            : "border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"
-                        )}
-                      >
-                        Full Gauntlet (214 puzzles)
-                      </button>
+                    <div className="mt-3 rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-700">
+                      Only one source is supported: the full master puzzle file.
                     </div>
                   </div>
 
@@ -1247,7 +1223,7 @@ export default function ConfigurationsPage() {
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-zinc-400" />
-                        <span><strong>Puzzle Navigation:</strong> Use Previous/Next buttons or Jump to go directly to any puzzle</span>
+                        <span><strong>Puzzle Navigation:</strong> Use Previous/Next buttons or Jump to go directly to any puzzle in the full list</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-zinc-400" />
@@ -1263,14 +1239,14 @@ export default function ConfigurationsPage() {
                   {/* Info */}
                   <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3">
                     <p className="text-xs leading-relaxed text-amber-900">
-                      💡 <strong>Tip:</strong> The full gauntlet contains all available word maze puzzles. Your progress saves automatically so you can pause, refresh your browser, and pick up where you left off!
+                      <strong>Tip:</strong> Edit `puzzles.json` to add or remove sentence mazes. The page will always use that full list, and progress still saves automatically.
                     </p>
                   </div>
                 </div>
               </div>
 
               <div className="mt-5 flex flex-wrap gap-2">
-                {["Progress auto-saves", "Full puzzles on demand", "Mobile-optimized layout"].map((item) => (
+                {["Progress auto-saves", "Single master source", "Mobile-optimized layout"].map((item) => (
                   <span key={item} className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-medium text-zinc-600">
                     {item}
                   </span>
@@ -1315,4 +1291,3 @@ export default function ConfigurationsPage() {
     </div>
   );
 }
-

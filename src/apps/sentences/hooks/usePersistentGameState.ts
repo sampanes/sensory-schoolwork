@@ -10,7 +10,6 @@ interface GameState {
 }
 
 interface GameConfig {
-  useMasterData: boolean;
   startingPuzzle: number;
 }
 
@@ -81,7 +80,6 @@ export function usePersistentGameState(totalPuzzles: number) {
 
 export function useGameConfig() {
   const [config, setConfig] = useState<GameConfig>({
-    useMasterData: false,
     startingPuzzle: 0,
   });
 
@@ -89,7 +87,13 @@ export function useGameConfig() {
     try {
       const saved = localStorage.getItem(CONFIG_KEY);
       if (saved) {
-        setConfig(JSON.parse(saved));
+        const parsed = JSON.parse(saved) as Partial<GameConfig> & { useMasterData?: boolean };
+        setConfig({
+          startingPuzzle:
+            typeof parsed.startingPuzzle === 'number' && Number.isFinite(parsed.startingPuzzle)
+              ? parsed.startingPuzzle
+              : 0,
+        });
       }
     } catch (e) {
       console.error('Failed to load config:', e);
