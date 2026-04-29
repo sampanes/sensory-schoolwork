@@ -124,6 +124,19 @@ Then queue the same limited batch:
 python .\scripts\comfyui_bulk_images.py bulk --limit 3
 ```
 
+`--limit 3` is only for small test batches. After the probe style/settings are approved, omit `--limit` to process every row in the CSV:
+
+```powershell
+python .\scripts\comfyui_bulk_images.py bulk
+```
+
+To process every sentence puzzle directly from `src\apps\sentences\data\puzzles.json`, using each puzzle's `image_description` and `solution_sentence`:
+
+```powershell
+python .\scripts\comfyui_bulk_images.py bulk --dry-run --puzzles-json
+python .\scripts\comfyui_bulk_images.py bulk --puzzles-json
+```
+
 Bulk images download to `generated\images\comfyui\bulk\`. The CSV columns are `id`, `sentence`, `description`, `width`, `height`, and `seed`. The script uses `description` as the visual subject and uses `sentence` only as scene context; by default it also tells the image model not to render words, captions, labels, numbers, signs, or readable text.
 
 The current `basic_flux_t2i.api.json` workflow does not expose a negative prompt text node, so the wrapper records the negative prompt in sidecar metadata but omits `--negative-prompt` unless the workflow is updated to support it.

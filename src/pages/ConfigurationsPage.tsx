@@ -498,7 +498,7 @@ export default function ConfigurationsPage() {
   const [spellingCustomListEntries, setSpellingCustomListEntries] = useState(parseSpellingCustomList(getStoredSpellingCustomListText()));
   const [spellingCustomListDraft, setSpellingCustomListDraft] = useState("");
   const [expandedSection, setExpandedSection] = useState<MathSectionKey>(null);
-  const spellingCustomListInputRef = useRef<HTMLInputElement | null>(null);
+  const spellingCustomListInputRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     setMathDebugEnabled(getStoredMathDebugEnabled());
@@ -568,12 +568,12 @@ export default function ConfigurationsPage() {
   };
 
   const commitSpellingCustomListDraft = () => {
-    const nextEntry = parseSpellingCustomList(spellingCustomListDraft)[0];
-    if (!nextEntry) {
+    const nextEntries = parseSpellingCustomList(spellingCustomListDraft);
+    if (nextEntries.length === 0) {
       return false;
     }
 
-    commitSpellingCustomListEntries([...parsedCustomSpellingWords, nextEntry]);
+    commitSpellingCustomListEntries([...parsedCustomSpellingWords, ...nextEntries]);
     setSpellingCustomListDraft("");
     window.setTimeout(() => {
       spellingCustomListInputRef.current?.focus();
@@ -1003,7 +1003,7 @@ export default function ConfigurationsPage() {
                   <div>
                     <h3 className="text-sm font-semibold tracking-tight text-zinc-950">Custom spelling list</h3>
                     <p className="mt-1 text-sm text-zinc-600">
-                      Type one word per line. Add an optional sentence after `; ` on the same line.
+                      Type or paste one word per line. Add an optional sentence after a semicolon on the same line.
                     </p>
                   </div>
                   <div className="rounded-2xl border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold text-zinc-700">
@@ -1060,11 +1060,11 @@ export default function ConfigurationsPage() {
                     </div>
                   ) : null}
 
-                  <div className="flex items-center gap-2">
-                    <input
+                  <div className="flex items-start gap-2">
+                    <textarea
                       ref={spellingCustomListInputRef}
                       id="spelling-custom-list"
-                      type="text"
+                      rows={3}
                       value={spellingCustomListDraft}
                       onChange={(event) => {
                         setSpellingCustomListDraft(event.target.value);
@@ -1072,7 +1072,7 @@ export default function ConfigurationsPage() {
                       onKeyDown={(event) => {
                         event.stopPropagation();
 
-                        if (event.key === "Enter") {
+                        if (event.key === "Enter" && !event.shiftKey) {
                           event.preventDefault();
                           void commitSpellingCustomListDraft();
                           return;
@@ -1086,8 +1086,8 @@ export default function ConfigurationsPage() {
                           commitSpellingCustomListEntries(nextEntries);
                         }
                       }}
-                      placeholder="Type a word, or word; sentence, then press Enter"
-                      className="block w-full border-0 bg-transparent px-1 py-1 text-sm text-zinc-900 outline-none"
+                      placeholder={"word; sentence\nword; sentence\nword"}
+                      className="block min-h-24 w-full resize-y border-0 bg-transparent px-1 py-1 text-sm leading-6 text-zinc-900 outline-none"
                       spellCheck={false}
                     />
                     <button
@@ -1097,7 +1097,7 @@ export default function ConfigurationsPage() {
                       }}
                       className="shrink-0 rounded-xl border border-zinc-300 bg-zinc-50 px-3 py-2 text-xs font-semibold text-zinc-700 transition hover:border-zinc-400 hover:bg-zinc-100"
                     >
-                      Add
+                      Add all
                     </button>
                   </div>
                 </div>
@@ -1106,7 +1106,7 @@ export default function ConfigurationsPage() {
                   {parsedCustomSpellingWords.length > 0
                     ? `Saved ${parsedCustomSpellingWords.length} custom word${parsedCustomSpellingWords.length === 1 ? "" : "s"}.`
                     : spellingCustomListDraft
-                      ? "Press Enter to turn the current line into a saved bubble."
+                      ? "Press Enter to save the current draft."
                       : "No custom words saved yet."}
                 </div>
               </div>

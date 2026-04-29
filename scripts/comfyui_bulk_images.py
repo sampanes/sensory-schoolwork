@@ -24,6 +24,7 @@ DEFAULT_HELPER_REPO = Path(r"Q:\AI\Repos\lyric-video")
 DEFAULT_WORKFLOW = Path(r"workflows\comfyui\node-graphs\basic_flux_t2i.api.json")
 DEFAULT_SERVER = "http://127.0.0.1:8188"
 DEFAULT_COMFYUI_ROOT = r"C:\AI\ComfyUI_portable"
+DEFAULT_PUZZLES_JSON = Path(r"src\apps\sentences\data\puzzles.json")
 
 DEFAULT_STYLE_PROMPT = (
     "friendly classroom illustration, bright colors, clean shapes, soft lighting, "
@@ -101,11 +102,11 @@ def safe_id(value: str) -> str:
     return cleaned
 
 
-def text_value(row: dict[str, str], *names: str) -> str:
+def text_value(row: dict[str, Any], *names: str) -> str:
     for name in names:
         value = row.get(name)
-        if value is not None and value.strip():
-            return value.strip()
+        if value is not None and str(value).strip():
+            return str(value).strip()
     return ""
 
 
@@ -118,8 +119,10 @@ def int_value(raw: str, fallback: int, label: str) -> int:
         raise ValueError(f"{label} must be an integer, got {raw!r}") from exc
 
 
-def bool_value(raw: str) -> bool:
-    return raw.strip().lower() in {"1", "true", "yes", "y", "on"}
+def bool_value(raw: object) -> bool:
+    if isinstance(raw, bool):
+        return raw
+    return str(raw).strip().lower() in {"1", "true", "yes", "y", "on"}
 
 
 def build_positive_prompt(
@@ -231,7 +234,7 @@ def ensure_comfyui_reachable(args: argparse.Namespace) -> None:
     )
 
 
-def normalize_job(row: dict[str, str], args: argparse.Namespace, index: int) -> dict[str, Any]:
+def normalize_job(row: dict[str, Any], args: argparse.Namespace, index: int) -> dict[str, Any]:
     job_id = text_value(row, "id", "puzzle_id")
     sentence = text_value(row, "sentence", "solution_sentence")
     description = text_value(row, "description", "image_description")
@@ -254,6 +257,7 @@ def normalize_job(row: dict[str, str], args: argparse.Namespace, index: int) -> 
         "height": height,
         "seed": seed,
         "allow_text": args.allow_text or row_allow_text,
+        "pdf_page": row.get("pdf_page"),
         "source_row": index + 1,
     }
 
@@ -273,6 +277,41 @@ def load_jobs(csv_path: Path, args: argparse.Namespace) -> list[dict[str, Any]]:
     jobs = [normalize_job(row, args, index) for index, row in enumerate(rows)]
     if not jobs:
         raise SystemExit(f"No jobs to process from {csv_path}")
+    return jobs
+
+
+def load_puzzle_jobs(json_path: Path, args: argparse.Namespace) -> list[dict[str, Any]]:
+    if not json_path.exists():
+        raise SystemExit(f"Puzzle JSON file does not exist: {json_path}")
+
+    data = json.loads(json_path.read_text(encoding="utf-8"))
+    puzzles = data.get("puzzles") if isinstance(data, dict) else None
+    if not isinstance(puzzles, list):
+        raise SystemExit(f"Puzzle JSON does not contain a puzzles list: {json_path}")
+
+    if args.limit is not None:
+        puzzles = puzzles[: args.limit]
+
+    jobs: list[dict[str, Any]] = []
+    for index, puzzle in enumerate(puzzles):
+        if not isinstance(puzzle, dict):
+            raise SystemExit(f"Puzzle entry {index + 1} is not an object in {json_path}")
+        jobs.append(
+            normalize_job(
+                {
+                    "puzzle_id": puzzle.get("puzzle_id"),
+                    "solution_sentence": puzzle.get("solution_sentence"),
+                    "image_description": puzzle.get("image_description"),
+                    "pdf_page": puzzle.get("pdf_page"),
+                    "allow_text": puzzle.get("allow_text", False),
+                },
+                args,
+                index,
+            )
+        )
+
+    if not jobs:
+        raise SystemExit(f"No puzzle jobs to process from {json_path}")
     return jobs
 
 
@@ -329,6 +368,7 @@ def run_job(
     mode: str,
     output_dir: Path,
     source_csv: Path | None = None,
+    source_json: Path | None = None,
 ) -> int:
     helper_repo = Path(args.helper_repo)
     if not args.dry_run:
@@ -356,6 +396,7 @@ def run_job(
         "id": job["id"],
         "sentence": job["sentence"],
         "description": job["description"],
+        "pdf_page": job.get("pdf_page"),
         "positive_prompt": positive_prompt,
         "negative_prompt": negative_prompt,
         "negative_prompt_applied": bool(getattr(args, "workflow_has_negative_prompt", True)),
@@ -368,6 +409,7 @@ def run_job(
         "helper_repo": str(helper_repo),
         "server": args.server,
         "source_csv": str(source_csv) if source_csv else None,
+        "source_json": str(source_json) if source_json else None,
         "source_row": job.get("source_row"),
         "command": command,
     }
@@ -452,8 +494,14 @@ def command_bulk(args: argparse.Namespace) -> int:
     args.workflow_has_negative_prompt = workflow_supports_negative_prompt(args)
     if not args.workflow_has_negative_prompt:
         print("Workflow has no negative prompt text node; omitting --negative-prompt.")
-    csv_path = project_path(args.csv)
-    jobs = load_jobs(csv_path, args)
+    source_csv = None
+    source_json = None
+    if args.puzzles_json:
+        source_json = project_path(args.puzzles_json)
+        jobs = load_puzzle_jobs(source_json, args)
+    else:
+        source_csv = project_path(args.csv)
+        jobs = load_jobs(source_csv, args)
     if not args.dry_run:
         ensure_comfyui_reachable(args)
 
@@ -461,7 +509,14 @@ def command_bulk(args: argparse.Namespace) -> int:
     failures: list[dict[str, Any]] = []
     for job in jobs:
         try:
-            run_job(args, job=job, mode="bulk", output_dir=output_dir, source_csv=csv_path)
+            run_job(
+                args,
+                job=job,
+                mode="bulk",
+                output_dir=output_dir,
+                source_csv=source_csv,
+                source_json=source_json,
+            )
         except QueueFailure as exc:
             failures.append({"id": job["id"], "error": str(exc), "returncode": exc.returncode})
             print(f"FAILED {job['id']}: {exc}", file=sys.stderr)
@@ -472,7 +527,8 @@ def command_bulk(args: argparse.Namespace) -> int:
             failure_log,
             {
                 "created_at": datetime.now(timezone.utc).isoformat(),
-                "source_csv": str(csv_path),
+                "source_csv": str(source_csv) if source_csv else None,
+                "source_json": str(source_json) if source_json else None,
                 "failures": failures,
             },
         )
@@ -516,7 +572,14 @@ def build_parser() -> argparse.ArgumentParser:
     bulk = subparsers.add_parser("bulk", help="Generate images from a CSV job list.")
     add_common_args(bulk)
     bulk.add_argument("--csv", default=r"generated\prompts\image_jobs.csv")
-    bulk.add_argument("--limit", type=int, help="Only process the first N CSV rows.")
+    bulk.add_argument(
+        "--puzzles-json",
+        nargs="?",
+        const=str(DEFAULT_PUZZLES_JSON),
+        default=None,
+        help="Read all jobs directly from sentence puzzles JSON instead of the CSV.",
+    )
+    bulk.add_argument("--limit", type=int, help="Only process the first N jobs.")
     bulk.add_argument("--bulk-output-dir", default=r"generated\images\comfyui\bulk")
     bulk.set_defaults(func=command_bulk)
 

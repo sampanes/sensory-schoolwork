@@ -46,9 +46,9 @@ export function parseSpellingCustomList(text: string): SpellingWord[] {
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line) => {
-      const separator = line.indexOf("; ");
+      const separator = line.indexOf(";");
       const wordPart = separator >= 0 ? line.slice(0, separator).trim() : line;
-      const sentencePart = separator >= 0 ? line.slice(separator + 2).trim() : "";
+      const sentencePart = separator >= 0 ? line.slice(separator + 1).trim() : "";
       const normalizedWord = wordPart.replace(/\s+/g, " ").trim();
 
       if (!normalizedWord) {
