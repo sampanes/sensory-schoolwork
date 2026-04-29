@@ -79,6 +79,55 @@ npm run dev
 
 Then open `http://localhost:5173`.
 
+## ComfyUI Bulk Image MVP
+
+This project does not include ComfyUI, models, or a separate Python environment. It uses the existing helper repo at `Q:\AI\Repos\lyric-video` and its `scripts\comfyui_server.py` and `scripts\comfyui_queue.py` adapters.
+
+First check or start the local ComfyUI API server from PowerShell:
+
+```powershell
+cd Q:\AI\Repos\lyric-video
+python scripts\comfyui_server.py status
+```
+
+If it is not running:
+
+```powershell
+cd Q:\AI\Repos\lyric-video
+python scripts\comfyui_server.py start --root "C:\AI\ComfyUI_portable"
+```
+
+Then run the probe dry-run from this repo:
+
+```powershell
+# From this repository root:
+python .\scripts\comfyui_bulk_images.py probe --dry-run
+```
+
+If the dry-run command looks right and ComfyUI is running, generate exactly one probe image:
+
+```powershell
+python .\scripts\comfyui_bulk_images.py probe
+```
+
+Probe images download to `generated\images\comfyui\probes\`. Each downloaded image gets the helper `.comfyui.json` sidecar plus this project's `.prompt.json` sidecar with the prompt, sentence, description, seed, dimensions, workflow, and command metadata.
+
+Only after the probe style/settings are approved, dry-run a small bulk batch from `generated\prompts\image_jobs.csv`:
+
+```powershell
+python .\scripts\comfyui_bulk_images.py bulk --dry-run --limit 3
+```
+
+Then queue the same limited batch:
+
+```powershell
+python .\scripts\comfyui_bulk_images.py bulk --limit 3
+```
+
+Bulk images download to `generated\images\comfyui\bulk\`. The CSV columns are `id`, `sentence`, `description`, `width`, `height`, and `seed`. The script uses `description` as the visual subject and uses `sentence` only as scene context; by default it also tells the image model not to render words, captions, labels, numbers, signs, or readable text.
+
+The current `basic_flux_t2i.api.json` workflow does not expose a negative prompt text node, so the wrapper records the negative prompt in sidecar metadata but omits `--negative-prompt` unless the workflow is updated to support it.
+
 ## Build And Deploy
 
 ```bash

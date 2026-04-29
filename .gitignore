@@ -4,6 +4,7 @@
 .claude/
 *.md
 !README.md
+!generated/prompts/known_good_settings.md
 *.txt
 
 # ----------------------------
@@ -89,6 +90,7 @@ pnpm-debug.log*
 # **/models/
 # **/checkpoints/
 # **/artifacts/
+generated/images/comfyui/
 
 
 math_test/delete*
