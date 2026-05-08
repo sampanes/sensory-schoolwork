@@ -1,6 +1,7 @@
 import { PACK_1 } from "./pack-1";
 import { PACK_2 } from "./pack-2";
 import { PACK_3 } from "./pack-3";
+import { PACK_4 } from "./pack-4";
 import { CONTRACTIONS } from "./contractions";
 import type { SpellingBank } from "./types";
 
@@ -11,4 +12,5 @@ export const BUILTIN_BANKS: readonly SpellingBank[] = [
   PACK_2,
   CONTRACTIONS,
   PACK_3,
+  PACK_4,
 ] as const;
