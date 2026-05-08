@@ -41,26 +41,34 @@ export function setStoredSpellingCustomListText(text: string) {
 }
 
 export function parseSpellingCustomList(text: string): SpellingWord[] {
-  return text
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => {
-      const separator = line.indexOf(";");
-      const wordPart = separator >= 0 ? line.slice(0, separator).trim() : line;
-      const sentencePart = separator >= 0 ? line.slice(separator + 1).trim() : "";
+  const entries: SpellingWord[] = [];
+
+  for (const rawLine of text.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line) {
+      continue;
+    }
+
+    const separator = line.indexOf(";");
+    if (separator >= 0) {
+      const wordPart = line.slice(0, separator).trim();
+      const sentencePart = line.slice(separator + 1).trim();
       const normalizedWord = wordPart.replace(/\s+/g, " ").trim();
-
-      if (!normalizedWord) {
-        return null;
+      if (normalizedWord) {
+        entries.push({ word: normalizedWord, sentence: sentencePart });
       }
+      continue;
+    }
 
-      return {
-        word: normalizedWord,
-        sentence: sentencePart,
-      };
-    })
-    .filter((entry): entry is SpellingWord => entry !== null);
+    for (const token of line.split(/[\s,]+/)) {
+      const word = token.trim();
+      if (word) {
+        entries.push({ word, sentence: "" });
+      }
+    }
+  }
+
+  return entries;
 }
 
 export function formatSpellingCustomListEntry(entry: SpellingWord) {
