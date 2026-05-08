@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
+  getInkPlacement,
   loadHandwritingModel,
   recognizeCanvas,
 } from "./handwritingModel";
@@ -202,35 +203,12 @@ export default function App() {
     }
   }, []);
 
-  const analyzeDrawing = useCallback(async () => {
-    if (isFinished || feedbackState === "word") {
-      return;
-    }
-
-    const canvas = canvasHandleRef.current?.getCanvas() ?? null;
-    if (!modelRef.current || !canvas) {
-      setFeedbackText("The handwriting brain is still waking up. Give it one more second.");
-      return;
-    }
-
-    const result = await recognizeCanvas(modelRef.current, canvas);
-
-    if (!result.hasInk || result.inkRatio < MIN_INK_RATIO) {
-      setFeedbackState("sloppy");
-      setFeedbackText("Too little ink to read. Make the letter larger and darker.");
-      playErrorSound("sloppy");
-      clearCanvas();
-      return;
-    }
-
-    const isConfident = result.confidence >= CONFIDENCE_THRESHOLD && result.margin >= MARGIN_THRESHOLD;
-    const guessedLetter = result.guess ?? "?";
-
-    if (isConfident && guessedLetter === currentLetter) {
+  const acceptLetter = useCallback(
+    (successMessage: string) => {
       const nextLetterIndex = letterIndex + 1;
 
       setFeedbackState("success");
-      setFeedbackText(`Nice! ${guessedLetter} is correct.`);
+      setFeedbackText(successMessage);
       setLetterIndex(nextLetterIndex);
       playSuccessSound();
       clearCanvas();
@@ -264,7 +242,64 @@ export default function App() {
           }
         }, 1100);
       }
+    },
+    [activeWords, clearCanvas, currentWord, letterIndex, playSuccessSound, speakText, wordIndex]
+  );
 
+  const analyzeDrawing = useCallback(async () => {
+    if (isFinished || feedbackState === "word") {
+      return;
+    }
+
+    const canvas = canvasHandleRef.current?.getCanvas() ?? null;
+    if (!canvas) {
+      setFeedbackText("The handwriting brain is still waking up. Give it one more second.");
+      return;
+    }
+
+    if (currentLetter === "'") {
+      const placement = getInkPlacement(canvas);
+
+      if (!placement.hasInk || placement.inkRatio < MIN_INK_RATIO) {
+        setFeedbackState("sloppy");
+        setFeedbackText("Make a small mark up high for the apostrophe.");
+        playErrorSound("sloppy");
+        clearCanvas();
+        return;
+      }
+
+      if (placement.centroidYRatio > 0.45) {
+        setFeedbackState("sloppy");
+        setFeedbackText("The apostrophe goes up high, near the tops of the letters.");
+        playErrorSound("sloppy");
+        clearCanvas();
+        return;
+      }
+
+      acceptLetter("Nice! That's the apostrophe.");
+      return;
+    }
+
+    if (!modelRef.current) {
+      setFeedbackText("The handwriting brain is still waking up. Give it one more second.");
+      return;
+    }
+
+    const result = await recognizeCanvas(modelRef.current, canvas);
+
+    if (!result.hasInk || result.inkRatio < MIN_INK_RATIO) {
+      setFeedbackState("sloppy");
+      setFeedbackText("Too little ink to read. Make the letter larger and darker.");
+      playErrorSound("sloppy");
+      clearCanvas();
+      return;
+    }
+
+    const isConfident = result.confidence >= CONFIDENCE_THRESHOLD && result.margin >= MARGIN_THRESHOLD;
+    const guessedLetter = result.guess ?? "?";
+
+    if (isConfident && guessedLetter === currentLetter) {
+      acceptLetter(`Nice! ${guessedLetter} is correct.`);
       return;
     }
 
@@ -280,19 +315,7 @@ export default function App() {
     setFeedbackText(`That looked like ${guessedLetter}, but that is not the next letter.`);
     playErrorSound("wrong");
     clearCanvas();
-  }, [
-    clearCanvas,
-    currentLetter,
-    currentWord,
-    feedbackState,
-    isFinished,
-    letterIndex,
-    playErrorSound,
-    playSuccessSound,
-    speakText,
-    activeWords,
-    wordIndex,
-  ]);
+  }, [acceptLetter, clearCanvas, currentLetter, feedbackState, isFinished, playErrorSound]);
 
   const scheduleAnalysis = useCallback(() => {
     if (analysisTimerRef.current) {
