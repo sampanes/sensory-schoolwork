@@ -5,6 +5,7 @@ import {
   recognizeCanvas,
 } from "./handwritingModel";
 import { SPELLING_WORDS } from "./spellingWords";
+import { generateTemplateSentence } from "./sentenceGen/templates";
 import WritingCanvas, { type WritingCanvasHandle } from "../../components/WritingCanvas";
 import { cn } from "../../utils/cn";
 import { getPreferredSpellingVoice } from "../../utils/speechPreferences";
@@ -14,6 +15,11 @@ type FeedbackState = "idle" | "success" | "wrong" | "sloppy" | "word";
 
 const CONFIDENCE_THRESHOLD = 0.35;
 const MARGIN_THRESHOLD = 0.05;
+// TODO: bug found by Evelyn — a single dot can sometimes pass MIN_INK_RATIO
+// and the model still recognizes it as 's' (and a few other letters) with
+// enough confidence to auto-advance. Need a stricter ink-shape check (stroke
+// length, bounding-box aspect ratio, or required minimum stroke count) before
+// running the recognizer.
 const MIN_INK_RATIO = 0.0005;
 
 function percent(value: number) {
@@ -41,11 +47,14 @@ export default function App() {
   const userUnlockedAudioRef = useRef(false);
   const activeWords = useMemo(() => {
     const customWords = parseSpellingCustomList(getStoredSpellingCustomListText());
-    if (customWords.length > 0) {
-      return customWords;
-    }
-
-    return [...SPELLING_WORDS];
+    const baseWords = customWords.length > 0 ? customWords : [...SPELLING_WORDS];
+    return baseWords.map((entry) => ({
+      ...entry,
+      sentence:
+        entry.sentence && entry.sentence.trim().length > 0
+          ? entry.sentence
+          : generateTemplateSentence(entry.word),
+    }));
   }, []);
   const totalLetters = useMemo(
     () => activeWords.reduce((total, entry) => total + entry.word.length, 0),

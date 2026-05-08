@@ -24,6 +24,7 @@ import {
   setStoredSpellingCustomListEnabled,
   setStoredSpellingCustomListText,
 } from "../utils/spellingPreferences";
+import { BUILTIN_BANKS } from "../apps/spelling/banks";
 import { cn } from "../utils/cn";
 
 type ConfigRow = {
@@ -1034,6 +1035,33 @@ export default function ConfigurationsPage() {
                   >
                     Reset custom list
                   </button>
+                </div>
+
+                <div className="mt-4">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                    Load a bank into the editor
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {BUILTIN_BANKS.map((bank) => (
+                      <button
+                        key={bank.id}
+                        type="button"
+                        onClick={() => {
+                          setSpellingCustomListDraft(serializeSpellingCustomList([...bank.words]));
+                          window.setTimeout(() => {
+                            spellingCustomListInputRef.current?.focus();
+                          }, 0);
+                        }}
+                        className="rounded-full border border-zinc-300 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 transition hover:border-zinc-950 hover:bg-zinc-50"
+                        title={`Paste ${bank.words.length} words into the editor`}
+                      >
+                        {bank.label} ({bank.words.length})
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-xs text-zinc-500">
+                    Pastes into the editor below. Edit if you want, then press Enter or Add all to save.
+                  </p>
                 </div>
 
                 <label className="mt-4 block text-sm font-semibold text-zinc-700" htmlFor="spelling-custom-list">
