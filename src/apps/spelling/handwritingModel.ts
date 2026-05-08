@@ -17,6 +17,45 @@ export type RecognitionResult = {
   inkRatio: number;
 };
 
+export type InkPlacement = {
+  hasInk: boolean;
+  inkRatio: number;
+  centroidYRatio: number;
+};
+
+export function getInkPlacement(canvas: HTMLCanvasElement): InkPlacement {
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (!context) {
+    return { hasInk: false, inkRatio: 0, centroidYRatio: 0 };
+  }
+
+  const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+  const { data, width, height } = imageData;
+  let pixelCount = 0;
+  let sumY = 0;
+
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const index = (y * width + x) * 4;
+      const brightness = (data[index] + data[index + 1] + data[index + 2]) / 3;
+      if (data[index + 3] > 0 && brightness < 245) {
+        pixelCount += 1;
+        sumY += y;
+      }
+    }
+  }
+
+  if (pixelCount === 0) {
+    return { hasInk: false, inkRatio: 0, centroidYRatio: 0 };
+  }
+
+  return {
+    hasInk: true,
+    inkRatio: pixelCount / (width * height),
+    centroidYRatio: sumY / pixelCount / height,
+  };
+}
+
 type InkBounds = {
   minX: number;
   minY: number;
