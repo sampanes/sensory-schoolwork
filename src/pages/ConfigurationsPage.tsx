@@ -27,13 +27,6 @@ import {
 import { BUILTIN_BANKS } from "../apps/spelling/banks";
 import { cn } from "../utils/cn";
 
-type ConfigRow = {
-  app: string;
-  description: string;
-  defaultPath?: string;
-  future: string[];
-};
-
 type RangeValue = {
   min: number;
   max: number;
@@ -50,20 +43,6 @@ type SliderDragState = {
 };
 
 type MathSectionKey = "operandA" | "operations" | "operandB" | "problemCount" | null;
-
-const rows: ConfigRow[] = [
-  {
-    app: "Spelling",
-    description: "Word lists, pacing, and audio options live here.",
-    defaultPath: "/spelling",
-    future: ["core word packs", "speech pacing", "voice practice options"],
-  },
-  {
-    app: "A-maze-ing sentences",
-    description: "Maze layout and sentence packs will be configurable once the web UI exists.",
-    future: ["sentence packs", "maze size", "import JSON"],
-  },
-];
 
 const OPERAND_RANGE = { min: 0, max: 100 } as const;
 const PROBLEM_COUNT_RANGE = { min: 6, max: 30 } as const;
@@ -350,7 +329,7 @@ function OperatorSection({
         Subtraction automatically keeps operand B less than or equal to operand A.
       </p>
 
-      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="mt-4 grid grid-cols-2 gap-2">
         <button
           type="button"
           onClick={() => {
@@ -397,14 +376,7 @@ function OperatorSection({
           <div className="text-xl font-black">-</div>
           <div className="mt-1">Subtraction</div>
         </button>
-        <div className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-4 text-sm text-zinc-400">
-          <div className="text-xl font-black">×</div>
-          <div className="mt-1">Future</div>
-        </div>
-        <div className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-4 text-sm text-zinc-400">
-          <div className="text-xl font-black">÷</div>
-          <div className="mt-1">Future</div>
-        </div>
+        {/* Future operators × ÷ live here when added; keep the grid 4-wide. */}
       </div>
     </CollapsibleSection>
   );
@@ -705,40 +677,18 @@ export default function ConfigurationsPage() {
           </button>
         </div>
 
-        <header className="mb-8">
+        <header className="mb-6">
           <h1 className="text-3xl font-semibold tracking-tight text-zinc-950">Configurations</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-500">
-            Keep the activity screens clean. Set the rules here.
-          </p>
         </header>
 
         <section className="mb-6 rounded-[2rem] border border-zinc-200 bg-white p-5 shadow-[0_20px_60px_-45px_rgba(0,0,0,0.35)] sm:p-6">
           <button
             type="button"
             onClick={() => setMathSetupExpanded((current) => !current)}
-            className="flex w-full items-start justify-between gap-4 text-left"
+            className="flex w-full items-center justify-between gap-3 text-left"
             aria-expanded={mathSetupExpanded}
           >
-            <div>
-              <h2 className="text-xl font-semibold tracking-tight text-zinc-950">Math setup</h2>
-              <p className="mt-1 max-w-xl text-sm leading-relaxed text-zinc-500">
-                Pick the top-number range, the operator mix, and the bottom-number range.
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2 text-xs text-zinc-500">
-                <span className="rounded-full bg-zinc-100 px-3 py-1 font-medium text-zinc-700">
-                  {formatRangeSummary(operandARange)} top
-                </span>
-                <span className="rounded-full bg-zinc-100 px-3 py-1 font-medium text-zinc-700">
-                  {formatOperatorSummary(mathConfig)}
-                </span>
-                <span className="rounded-full bg-zinc-100 px-3 py-1 font-medium text-zinc-700">
-                  {formatRangeSummary(operandBRange)} bottom
-                </span>
-                <span className="rounded-full bg-zinc-100 px-3 py-1 font-medium text-zinc-700">
-                  {mathConfig.problemCount} problems
-                </span>
-              </div>
-            </div>
+            <h2 className="text-xl font-semibold tracking-tight text-zinc-950">Math setup</h2>
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-zinc-50 text-zinc-600">
               <svg
                 viewBox="0 0 24 24"
@@ -952,26 +902,10 @@ export default function ConfigurationsPage() {
           <button
             type="button"
             onClick={() => setSpellingSetupExpanded((current) => !current)}
-            className="flex w-full items-start justify-between gap-4 text-left"
+            className="flex w-full items-center justify-between gap-3 text-left"
             aria-expanded={spellingSetupExpanded}
           >
-            <div>
-              <h2 className="text-xl font-semibold tracking-tight text-zinc-950">Spelling setup</h2>
-              <p className="mt-1 max-w-xl text-sm leading-relaxed text-zinc-500">
-                Keep spelling audio and future controls together in one collapsible section.
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2 text-xs text-zinc-500">
-                <span className="rounded-full bg-zinc-100 px-3 py-1 font-medium text-zinc-700">
-                  Voice: {speechSupported ? selectedVoiceLabel : "Unavailable"}
-                </span>
-                <span className="rounded-full bg-zinc-100 px-3 py-1 font-medium text-zinc-700">
-                  {spellingCustomListEnabled && parsedCustomSpellingWords.length > 0
-                    ? `Custom list: ${parsedCustomSpellingWords.length} words`
-                    : "Built-in list"}
-                </span>
-                <span className="rounded-full bg-zinc-100 px-3 py-1 font-medium text-zinc-700">Bubbles save instantly</span>
-              </div>
-            </div>
+            <h2 className="text-xl font-semibold tracking-tight text-zinc-950">Spelling setup</h2>
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-zinc-50 text-zinc-600">
               <svg
                 viewBox="0 0 24 24"
@@ -987,26 +921,9 @@ export default function ConfigurationsPage() {
 
           {spellingSetupExpanded ? (
             <>
-              <div className="mt-5 flex flex-wrap gap-2">
-                <Link
-                  to="/spelling"
-                  className="rounded-full border border-zinc-950 bg-zinc-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-black"
-                >
-                  Open spelling
-                </Link>
-                <span className="rounded-full border border-zinc-200 bg-zinc-50 px-4 py-2 text-sm font-medium text-zinc-600">
-                  One line per word, optional `; sentence` on the same line
-                </span>
-              </div>
-
               <div className="mt-5 rounded-[1.6rem] border border-zinc-200 bg-zinc-50 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h3 className="text-sm font-semibold tracking-tight text-zinc-950">Custom spelling list</h3>
-                    <p className="mt-1 text-sm text-zinc-600">
-                      Type or paste one word per line. Add an optional sentence after a semicolon on the same line.
-                    </p>
-                  </div>
+                  <h3 className="text-sm font-semibold tracking-tight text-zinc-950">Custom spelling list</h3>
                   <div className="rounded-2xl border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold text-zinc-700">
                     {parsedCustomSpellingWords.length} words saved
                   </div>
@@ -1172,13 +1089,6 @@ export default function ConfigurationsPage() {
                 </>
               )}
 
-              <div className="mt-5 flex flex-wrap gap-2">
-                {["one word per line", "optional ; sentence", "stored on this device"].map((item) => (
-                  <span key={item} className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-medium text-zinc-600">
-                    {item}
-                  </span>
-                ))}
-              </div>
             </>
           ) : null}
         </section>
@@ -1188,23 +1098,10 @@ export default function ConfigurationsPage() {
           <button
             type="button"
             onClick={() => setSentenceSetupExpanded((current) => !current)}
-            className="flex w-full items-start justify-between gap-4 text-left"
+            className="flex w-full items-center justify-between gap-3 text-left"
             aria-expanded={sentenceSetupExpanded}
           >
-            <div>
-              <h2 className="text-xl font-semibold tracking-tight text-zinc-950">A-maze-ing Sentence setup</h2>
-              <p className="mt-1 max-w-xl text-sm leading-relaxed text-zinc-500">
-                The sentence page always uses the full master puzzle list from `puzzles.json`.
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2 text-xs text-zinc-500">
-                <span className="rounded-full bg-zinc-100 px-3 py-1 font-medium text-zinc-700">
-                  Source: full `puzzles.json`
-                </span>
-                <span className="rounded-full bg-zinc-100 px-3 py-1 font-medium text-zinc-700">
-                  Progress saves automatically
-                </span>
-              </div>
-            </div>
+            <h2 className="text-xl font-semibold tracking-tight text-zinc-950">A-maze-ing Sentence setup</h2>
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-zinc-50 text-zinc-600">
               <svg
                 viewBox="0 0 24 24"
@@ -1219,102 +1116,12 @@ export default function ConfigurationsPage() {
           </button>
 
           {sentenceSetupExpanded ? (
-            <>
-              <div className="mt-5 flex flex-wrap gap-2">
-                <Link
-                  to="/sentences"
-                  className="rounded-full border border-zinc-950 bg-zinc-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-black"
-                >
-                  Open A-maze-ing Sentences
-                </Link>
-              </div>
-
-              <div className="mt-5 rounded-[1.6rem] border border-zinc-200 bg-zinc-50 p-4">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-semibold tracking-tight text-zinc-950">Puzzle Source</h3>
-                    <p className="mt-1 text-xs leading-relaxed text-zinc-600">
-                      This app reads the full sentence master list directly from `src/apps/sentences/data/puzzles.json`.
-                    </p>
-                    <div className="mt-3 rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-700">
-                      Only one source is supported: the full master puzzle file.
-                    </div>
-                  </div>
-
-                  {/* Features Info */}
-                  <div className="rounded-2xl border border-zinc-200 bg-white p-3">
-                    <h4 className="text-xs font-semibold uppercase tracking-widest text-zinc-700">Features</h4>
-                    <ul className="mt-3 space-y-2 text-sm text-zinc-600">
-                      <li className="flex items-start gap-2">
-                        <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-zinc-400" />
-                        <span><strong>Persistent Progress:</strong> Your progress is saved to browser storage and restored on refresh</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-zinc-400" />
-                        <span><strong>Puzzle Navigation:</strong> Use Previous/Next buttons or Jump to go directly to any puzzle in the full list</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-zinc-400" />
-                        <span><strong>Reset All:</strong> Click the Reset button to clear progress and start from puzzle 1</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-zinc-400" />
-                        <span><strong>Completion Tracking:</strong> See how many puzzles you've completed in the header</span>
-                      </li>
-                    </ul>
-                  </div>
-
-                  {/* Info */}
-                  <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3">
-                    <p className="text-xs leading-relaxed text-amber-900">
-                      <strong>Tip:</strong> Edit `puzzles.json` to add or remove sentence mazes. The page will always use that full list, and progress still saves automatically.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-5 flex flex-wrap gap-2">
-                {["Progress auto-saves", "Single master source", "Mobile-optimized layout"].map((item) => (
-                  <span key={item} className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-medium text-zinc-600">
-                    {item}
-                  </span>
-                ))}
-              </div>
-            </>
+            <p className="mt-5 text-sm text-zinc-600">
+              Edit <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs">src/apps/sentences/data/puzzles.json</code> to change the puzzle list.
+            </p>
           ) : null}
         </section>
 
-        <ul className="space-y-4">
-          {rows.filter((row) => row.app !== "Spelling" && row.app !== "A-maze-ing sentences").map((row) => (
-            <li key={row.app} className="rounded-[1.6rem] border border-zinc-200 bg-white p-5 shadow-[0_18px_50px_-40px_rgba(0,0,0,0.35)]">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-semibold tracking-tight text-zinc-950">{row.app}</h2>
-                  <p className="mt-1 text-sm text-zinc-500">{row.description}</p>
-                </div>
-                {row.defaultPath ? (
-                  <Link
-                    to={row.defaultPath}
-                    className="rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-800 transition hover:border-zinc-950 hover:bg-zinc-50"
-                  >
-                    Open
-                  </Link>
-                ) : (
-                  <span className="rounded-full border border-zinc-200 bg-zinc-50 px-4 py-2 text-sm font-semibold text-zinc-500">
-                    Coming soon
-                  </span>
-                )}
-              </div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {row.future.map((item) => (
-                  <span key={item} className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-medium text-zinc-600">
-                    {item}
-                  </span>
-                ))}
-              </div>
-            </li>
-          ))}
-        </ul>
       </div>
     </div>
   );
