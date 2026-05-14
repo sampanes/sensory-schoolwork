@@ -14,6 +14,12 @@ import { getStoredSpellingCustomListEnabled, getStoredSpellingCustomListText, pa
 
 type FeedbackState = "idle" | "success" | "wrong" | "sloppy" | "word";
 
+type PlaylistWord = {
+  word: string;
+  sentence: string;
+  originalIndex: number;
+};
+
 const CONFIDENCE_THRESHOLD = 0.35;
 const MARGIN_THRESHOLD = 0.05;
 // TODO: bug found by a tester — a single dot can sometimes pass MIN_INK_RATIO
@@ -25,6 +31,26 @@ const MIN_INK_RATIO = 0.0005;
 
 function percent(value: number) {
   return `${Math.round(value * 100)}%`;
+}
+
+function buildPlaylist(): PlaylistWord[] {
+  const customWords = parseSpellingCustomList(getStoredSpellingCustomListText());
+  const baseWords = customWords.length > 0 ? customWords : [...SPELLING_WORDS];
+  const playlist: PlaylistWord[] = baseWords.map((entry, originalIndex) => ({
+    word: entry.word,
+    sentence:
+      entry.sentence && entry.sentence.trim().length > 0
+        ? entry.sentence
+        : generateTemplateSentence(entry.word),
+    originalIndex,
+  }));
+
+  for (let i = playlist.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [playlist[i], playlist[j]] = [playlist[j], playlist[i]];
+  }
+
+  return playlist;
 }
 
 export default function App() {
@@ -46,17 +72,7 @@ export default function App() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const lastSpokenAtRef = useRef(0);
   const userUnlockedAudioRef = useRef(false);
-  const activeWords = useMemo(() => {
-    const customWords = parseSpellingCustomList(getStoredSpellingCustomListText());
-    const baseWords = customWords.length > 0 ? customWords : [...SPELLING_WORDS];
-    return baseWords.map((entry) => ({
-      ...entry,
-      sentence:
-        entry.sentence && entry.sentence.trim().length > 0
-          ? entry.sentence
-          : generateTemplateSentence(entry.word),
-    }));
-  }, []);
+  const [activeWords, setActiveWords] = useState<PlaylistWord[]>(buildPlaylist);
   const totalLetters = useMemo(
     () => activeWords.reduce((total, entry) => total + entry.word.length, 0),
     [activeWords]
@@ -76,7 +92,12 @@ export default function App() {
   }, [activeWords, isFinished, letterIndex, totalLetters, wordIndex]);
 
   const progressValue = totalLetters > 0 ? Math.round((solvedLetters / totalLetters) * 100) : 0;
-  const wordProgressValue = Math.round((letterIndex / currentWord.length) * 100);
+
+  const completedOriginalIndices = useMemo(
+    () => new Set(activeWords.slice(0, wordIndex).map((entry) => entry.originalIndex)),
+    [activeWords, wordIndex]
+  );
+  const currentOriginalIndex = isFinished ? -1 : currentWordEntry.originalIndex;
 
   const clearCanvas = useCallback(() => {
     canvasHandleRef.current?.clear();
@@ -371,11 +392,12 @@ export default function App() {
 
   const restart = () => {
     cancelTimers();
+    setActiveWords(buildPlaylist());
     setWordIndex(0);
     setLetterIndex(0);
     setIsFinished(false);
     setFeedbackState("idle");
-    setFeedbackText("Back to word one. Tap play, then write the next letter.");
+    setFeedbackText("Fresh shuffle. Tap play, then write the next letter.");
     clearCanvas();
   };
 
@@ -435,11 +457,24 @@ export default function App() {
                 <span>{wordIndex + 1}/{activeWords.length}</span>
                 <span>{Math.max(letterIndex, 0)}/{currentWord.length}</span>
               </div>
-              <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-violet-500 to-fuchsia-500 transition-[width] duration-500"
-                  style={{ width: `${wordProgressValue}%` }}
-                />
+              <div className="mt-2 flex flex-wrap gap-1.5" aria-label="Pack progress">
+                {activeWords.map((_, originalIdx) => {
+                  const completed = isFinished || completedOriginalIndices.has(originalIdx);
+                  const isCurrent = originalIdx === currentOriginalIndex;
+                  return (
+                    <span
+                      key={originalIdx}
+                      className={cn(
+                        "h-2 w-2 rounded-full transition-colors",
+                        completed
+                          ? "bg-violet-500"
+                          : isCurrent
+                            ? "bg-violet-200 ring-2 ring-violet-400"
+                            : "bg-slate-200"
+                      )}
+                    />
+                  );
+                })}
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 {currentWord.split("").map((letter, index) => {
