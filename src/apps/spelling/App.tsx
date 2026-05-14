@@ -16,7 +16,7 @@ type FeedbackState = "idle" | "success" | "wrong" | "sloppy" | "word";
 
 const CONFIDENCE_THRESHOLD = 0.35;
 const MARGIN_THRESHOLD = 0.05;
-// TODO: bug found by Evelyn — a single dot can sometimes pass MIN_INK_RATIO
+// TODO: bug found by a tester — a single dot can sometimes pass MIN_INK_RATIO
 // and the model still recognizes it as 's' (and a few other letters) with
 // enough confidence to auto-advance. Need a stricter ink-shape check (stroke
 // length, bounding-box aspect ratio, or required minimum stroke count) before
