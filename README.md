@@ -1,16 +1,17 @@
 # Sensory Schoolwork
 
-Sensory Schoolwork is a browser-based practice site for a first grader. It is designed for phone or tablet use with a stylus and currently includes handwriting math, handwriting spelling, and A-maze-ing sentences.
+Sensory Schoolwork is a browser-based practice site for a first grader. It is designed for phone or tablet use and includes handwriting math, handwriting spelling, A-maze-ing sentences, and Sound It Out reading practice.
 
 Live site: https://sampanes.github.io/sensory-schoolwork/
 
 ## What It Is
 
-This site has three main activities:
+This site has four main activities:
 
 - `Handwriting math`: solve vertical addition and subtraction problems by writing digits in answer boxes.
 - `Handwriting spelling`: hear a word, write it one letter at a time, and optionally hear it used in a sentence.
 - `A-maze-ing sentences`: trace through a word grid to build the hidden sentence.
+- `Sound It Out`: practice decoding word families, then reveal a picture and hear the whole word.
 
 There is also a `Configurations` page for changing math setup and spelling voice settings.
 
@@ -18,12 +19,13 @@ Everything runs in the browser. The app is built with React, TypeScript, and Vit
 
 ## How To Navigate
 
-Start on the home page and tap one of the three activity cards.
+Start on the home page and tap one of the four activity cards.
 
 - `/` shows the home page with links to all activities.
 - `/#/math` opens handwriting math.
 - `/#/spelling` opens handwriting spelling.
 - `/#/sentences` opens A-maze-ing sentences.
+- `/#/reading` opens the Sound It Out word-family chooser.
 - `/#/configurations` opens the configuration screen.
 
 The `Configurations` page is the place to adjust the math round setup and the spelling voice without changing code.
