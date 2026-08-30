@@ -1,10 +1,43 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { getPreferredSpellingVoice } from "../../utils/speechPreferences";
 import { getReadingFamily, READING_FAMILIES } from "./readingWords";
 import "./reading.css";
 
+let readingEnteredFullscreen = false;
+
+type LockableOrientation = ScreenOrientation & {
+  lock?: (orientation: "landscape") => Promise<void>;
+  unlock?: () => void;
+};
+
+async function prepareReadingDeck() {
+  if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+    try {
+      await document.documentElement.requestFullscreen();
+      readingEnteredFullscreen = true;
+    } catch {
+      // Fullscreen is an enhancement. Orientation may still be lockable.
+    }
+  }
+
+  try {
+    await (screen.orientation as LockableOrientation).lock?.("landscape");
+  } catch {
+    // Android browsers differ here; never prevent a child entering the deck.
+  }
+}
+
 function FamilyChooser() {
+  const navigate = useNavigate();
+
+  const chooseFamily = (event: React.MouseEvent<HTMLAnchorElement>, familyId: string) => {
+    event.preventDefault();
+    void prepareReadingDeck().finally(() => {
+      navigate(`/reading/${familyId}`, { state: { fromReadingChooser: true } });
+    });
+  };
+
   return (
     <main className="reading-chooser">
       <div className="reading-chooser__panel">
@@ -15,7 +48,12 @@ function FamilyChooser() {
         <p>Choose a word family.</p>
         <div className="reading-family-grid">
           {READING_FAMILIES.map((family) => (
-            <Link key={family.id} to={`/reading/${family.id}`} className="reading-family">
+            <Link
+              key={family.id}
+              to={`/reading/${family.id}`}
+              className="reading-family"
+              onClick={(event) => chooseFamily(event, family.id)}
+            >
               {family.label}
             </Link>
           ))}
@@ -47,11 +85,20 @@ function speakWord(word: string) {
 function ReadingDeck({ familyId }: { familyId: string }) {
   const family = getReadingFamily(familyId)!;
   const navigate = useNavigate();
+  const location = useLocation();
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
   const touchStartY = useRef<number | null>(null);
   const current = family.words[index];
+
+  const leaveDeck = useCallback(() => {
+    if ((location.state as { fromReadingChooser?: boolean } | null)?.fromReadingChooser) {
+      navigate(-1);
+    } else {
+      navigate("/reading", { replace: true });
+    }
+  }, [location.state, navigate]);
 
   const move = useCallback((amount: number) => {
     setIndex((value) => (value + amount + family.words.length) % family.words.length);
@@ -75,14 +122,30 @@ function ReadingDeck({ familyId }: { familyId: string }) {
         event.preventDefault();
         toggle();
       }
-      if (event.key === "Escape" || event.key === "ArrowDown") navigate("/reading");
+      if (event.key === "Escape" || event.key === "ArrowDown") leaveDeck();
     };
+    const preventNativeTouch = (event: TouchEvent) => event.preventDefault();
+    document.documentElement.classList.add("reading-deck-active");
+    document.body.classList.add("reading-deck-active");
     window.addEventListener("keydown", onKeyDown);
+    document.addEventListener("touchmove", preventNativeTouch, { passive: false });
     return () => {
       window.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("touchmove", preventNativeTouch);
+      document.documentElement.classList.remove("reading-deck-active");
+      document.body.classList.remove("reading-deck-active");
       window.speechSynthesis?.cancel();
+      try {
+        (screen.orientation as LockableOrientation).unlock?.();
+      } catch {
+        // Best-effort cleanup for browsers with partial orientation support.
+      }
+      if (readingEnteredFullscreen) {
+        readingEnteredFullscreen = false;
+        if (document.fullscreenElement) void document.exitFullscreen?.().catch(() => undefined);
+      }
     };
-  }, [move, navigate, toggle]);
+  }, [leaveDeck, move, toggle]);
 
   return (
     <main
@@ -92,7 +155,7 @@ function ReadingDeck({ familyId }: { familyId: string }) {
         const start = touchStartY.current;
         const end = event.changedTouches[0]?.clientY;
         touchStartY.current = null;
-        if (start !== null && end !== undefined && end - start > 90) navigate("/reading");
+        if (start !== null && end !== undefined && end - start > 90) leaveDeck();
       }}
     >
       <div className={`reading-card ${revealed ? "reading-card--revealed" : ""}`} aria-live="polite">

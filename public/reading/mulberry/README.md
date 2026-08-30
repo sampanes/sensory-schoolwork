@@ -1,6 +1,6 @@
 # Mulberry Symbols artwork
 
-Artwork placed in this directory comes from the [Mulberry Symbols](https://github.com/mulberrysymbols/mulberry-symbols) project and remains subject to its original Creative Commons Attribution-ShareAlike (CC BY-SA) license.
+Artwork placed in this directory comes from the [Mulberry Symbols](https://github.com/mulberrysymbols/mulberry-symbols) project. Mulberry Symbols are copyright Paxtoncrafts Charitable Trust and licensed under the [Creative Commons Attribution-ShareAlike 3.0 Unported license](https://creativecommons.org/licenses/by-sa/3.0/).
 
 ## V1 coverage
 
