@@ -6,6 +6,7 @@ import HomePage from "./pages/HomePage";
 const MathApp = lazy(() => import("./apps/math/App"));
 const SpellingApp = lazy(() => import("./apps/spelling/App"));
 const SentencesApp = lazy(() => import("./apps/sentences/App"));
+const ReadingApp = lazy(() => import("./apps/reading/App"));
 
 function AppFallback() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
         <Route path="/math" element={<MathApp />} />
         <Route path="/spelling" element={<SpellingApp />} />
         <Route path="/sentences" element={<SentencesApp />} />
+        <Route path="/reading/:familyId?" element={<ReadingApp />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>

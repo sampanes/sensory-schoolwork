@@ -27,6 +27,12 @@ const activities: ActivityCard[] = [
     to: "/sentences",
     accent: "from-amber-500 via-orange-500 to-rose-600",
   },
+  {
+    title: "Sound It Out",
+    description: "Practice sounding out simple words.",
+    to: "/reading",
+    accent: "from-emerald-500 via-teal-500 to-cyan-600",
+  },
 ];
 
 export default function HomePage() {
