@@ -55,7 +55,7 @@ function FamilyChooser() {
             </Link>
           ))}
         </div>
-        <p className="reading-chooser__version">v1.0.2</p>
+        <p className="reading-chooser__version">{__BUILD_STAMP__}</p>
       </div>
     </main>
   );
