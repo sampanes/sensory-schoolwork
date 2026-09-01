@@ -4,10 +4,8 @@ on:
   push:
     branches:
       - tmp/arasaac-pack
-
 permissions:
   contents: read
-
 jobs:
   pack:
     runs-on: ubuntu-latest
@@ -17,78 +15,55 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install requests pillow
-      - name: Fetch refined ARASAAC candidates
+      - name: Resolve final candidates
         shell: bash
         run: |
           cat > /tmp/fetch.py <<'PY'
-          import io, json, os
+          import io,json,os
           from urllib.parse import quote
           import requests
-          from PIL import Image, ImageDraw
-
-          targets = {
-            'bat': ['bat', 'flying mammal'],
-            'rat': ['rat', 'mouse', 'rodent'],
-            'van': ['van', 'minivan', 'delivery van'],
-            'jam': ['jam', 'fruit jam', 'marmalade'],
-            'yam': ['yam', 'sweet potato'],
-            'fin': ['fin', 'fish fin'],
-            'jug': ['jug', 'pitcher'],
-            'mug': ['mug', 'coffee mug', 'cup'],
-            'pet': ['pet', 'domestic animal', 'companion animal'],
-            'fig': ['fig', 'fig fruit'],
-            'log': ['log', 'tree trunk', 'wood trunk'],
-            'ham': ['ham'],
-            'bin': ['bin', 'trash bin', 'waste bin'],
-            'bug': ['bug', 'insect'],
-            'cap': ['cap'],
+          from PIL import Image,ImageDraw
+          targets={
+            'log':['tree trunk','firewood','wood','log'],
+            'mat':['floor mat','door mat','doormat','welcome mat','mat'],
+            'hog':['wild boar','hog','pig'],
           }
-
-          session = requests.Session(); session.headers['User-Agent']='sensory-schoolwork asset curation'
-          os.makedirs('candidate-pack-2/contact', exist_ok=True)
-          data={}
-
-          def results(term):
-            out=[]
-            for mode in ('bestsearch','search'):
-              try:
-                r=session.get(f'https://api.arasaac.org/v1/pictograms/en/{mode}/{quote(term)}',timeout=30)
-                if r.ok and isinstance(r.json(),list): out.extend(r.json())
-              except Exception as e: print('SEARCH ERROR',term,mode,e,flush=True)
-            return out
-
-          for word, terms in targets.items():
+          s=requests.Session(); s.headers['User-Agent']='sensory-schoolwork asset curation'
+          os.makedirs('candidate-pack-3/contact',exist_ok=True); out={}
+          for word,terms in targets.items():
             seen=set(); cs=[]
             for term in terms:
-              for obj in results(term)[:12]:
-                pid=int(obj['_id'])
-                if pid in seen: continue
-                seen.add(pid)
-                kws=[k.get('keyword') for k in obj.get('keywords',[]) if isinstance(k,dict) and k.get('keyword')]
-                cs.append({'id':pid,'keywords':kws[:10],'query':term})
-                if len(cs)>=12: break
-              if len(cs)>=12: break
-            data[word]=cs
-            tiles=[]
+              for mode in ('bestsearch','search'):
+                try:
+                  r=s.get(f'https://api.arasaac.org/v1/pictograms/en/{mode}/{quote(term)}',timeout=30)
+                  arr=r.json() if r.ok else []
+                except Exception: arr=[]
+                for obj in arr[:10]:
+                  pid=int(obj['_id'])
+                  if pid in seen: continue
+                  seen.add(pid); kws=[k.get('keyword') for k in obj.get('keywords',[]) if isinstance(k,dict) and k.get('keyword')]
+                  cs.append({'id':pid,'keywords':kws[:10],'query':term})
+                  if len(cs)>=16: break
+                if len(cs)>=16: break
+              if len(cs)>=16: break
+            out[word]=cs; tiles=[]
             for c in cs:
               pid=c['id']
               try:
-                r=session.get(f'https://static.arasaac.org/pictograms/{pid}/{pid}_500.png',timeout=30); r.raise_for_status()
-                im=Image.open(io.BytesIO(r.content)).convert('RGB'); im.thumbnail((250,250))
-                tile=Image.new('RGB',(280,335),'white'); tile.paste(im,((280-im.width)//2,5))
-                d=ImageDraw.Draw(tile); d.text((7,260),f'{word} | {pid}',fill='black'); d.text((7,280),', '.join(c['keywords'][:4])[:40],fill='black'); d.text((7,305),c['query'][:40],fill='black')
-                tiles.append(tile)
-              except Exception as e: print('IMAGE ERROR',word,pid,e,flush=True)
+                r=s.get(f'https://static.arasaac.org/pictograms/{pid}/{pid}_500.png',timeout=30); r.raise_for_status()
+                im=Image.open(io.BytesIO(r.content)).convert('RGB'); im.thumbnail((240,240))
+                t=Image.new('RGB',(270,320),'white'); t.paste(im,((270-im.width)//2,5)); d=ImageDraw.Draw(t)
+                d.text((6,250),f'{word} | {pid}',fill='black'); d.text((6,270),', '.join(c['keywords'][:4])[:40],fill='black'); d.text((6,295),c['query'][:40],fill='black'); tiles.append(t)
+              except Exception as e: print('image',word,pid,e)
             if tiles:
-              cols=4; rows=(len(tiles)+cols-1)//cols
-              sheet=Image.new('RGB',(280*cols,335*rows),'#ddd')
-              for i,t in enumerate(tiles): sheet.paste(t,((i%cols)*280,(i//cols)*335))
-              sheet.save(f'candidate-pack-2/contact/{word}.jpg',quality=90)
-            print(word,[(c['id'],c['keywords'][:3],c['query']) for c in cs],flush=True)
-          with open('candidate-pack-2/candidates.json','w') as f: json.dump(data,f,indent=2)
+              cols=4; rows=(len(tiles)+3)//4; sh=Image.new('RGB',(270*cols,320*rows),'#ddd')
+              for i,t in enumerate(tiles): sh.paste(t,((i%4)*270,(i//4)*320))
+              sh.save(f'candidate-pack-3/contact/{word}.jpg',quality=90)
+            print(word,[(c['id'],c['keywords'][:4],c['query']) for c in cs],flush=True)
+          json.dump(out,open('candidate-pack-3/candidates.json','w'),indent=2)
           PY
           python /tmp/fetch.py
       - uses: actions/upload-artifact@v4
         with:
-          name: arasaac-candidates-2
-          path: candidate-pack-2
+          name: arasaac-candidates-3
+          path: candidate-pack-3
