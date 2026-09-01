@@ -1,0 +1,147 @@
+name: Temporary ARASAAC candidate pack
+
+on:
+  push:
+    branches:
+      - tmp/arasaac-pack
+
+permissions:
+  contents: read
+
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install requests pillow
+      - name: Fetch ARASAAC candidates
+        shell: bash
+        run: |
+          cat > /tmp/fetch.py <<'PY'
+          import io, json, os, time
+          from urllib.parse import quote
+          import requests
+          from PIL import Image, ImageDraw, ImageFont
+
+          targets = {
+            'bat': ['bat animal'],
+            'cat': ['cat'],
+            'hat': ['hat'],
+            'mat': ['doormat', 'mat'],
+            'rat': ['rat animal'],
+            'can': ['tin can', 'can container'],
+            'fan': ['electric fan', 'fan appliance'],
+            'man': ['man'],
+            'pan': ['frying pan'],
+            'van': ['van vehicle'],
+            'cap': ['cap hat'],
+            'map': ['map'],
+            'nap': ['nap sleeping'],
+            'tap': ['faucet', 'tap water'],
+            'ham': ['ham food'],
+            'jam': ['jam food'],
+            'ram': ['ram sheep', 'male sheep'],
+            'yam': ['yam vegetable', 'sweet potato'],
+            'bin': ['bin container', 'trash bin'],
+            'fin': ['fish fin', 'fin animal'],
+            'pin': ['pin sewing'],
+            'tin': ['tin can', 'can container'],
+            'bug': ['bug insect'],
+            'jug': ['jug container'],
+            'mug': ['mug cup'],
+            'rug': ['rug carpet'],
+            'jet': ['jet airplane'],
+            'net': ['net'],
+            'pet': ['pet animal'],
+            'vet': ['veterinarian'],
+            'fig': ['fig fruit'],
+            'pig': ['pig'],
+            'wig': ['wig hair'],
+            'dog': ['dog'],
+            'hog': ['hog pig'],
+            'log': ['wood log'],
+          }
+
+          session = requests.Session()
+          session.headers['User-Agent'] = 'sensory-schoolwork asset curation'
+          os.makedirs('candidate-pack/contact', exist_ok=True)
+          data = {}
+
+          def search(term):
+            urls = [
+              f'https://api.arasaac.org/v1/pictograms/en/bestsearch/{quote(term)}',
+              f'https://api.arasaac.org/v1/pictograms/en/search/{quote(term)}',
+            ]
+            last = None
+            for url in urls:
+              try:
+                r = session.get(url, timeout=30)
+                last = f'{r.status_code} {url}'
+                if r.ok:
+                  x = r.json()
+                  if isinstance(x, list) and x:
+                    return x
+              except Exception as e:
+                last = repr(e)
+            raise RuntimeError(f'No results for {term}: {last}')
+
+          for word, terms in targets.items():
+            seen = set(); candidates = []
+            for term in terms:
+              try:
+                results = search(term)
+              except Exception as e:
+                print(word, term, 'SEARCH ERROR', e, flush=True)
+                continue
+              for obj in results[:8]:
+                pid = int(obj['_id'])
+                if pid in seen: continue
+                seen.add(pid)
+                kws = []
+                for kw in obj.get('keywords', []):
+                  if isinstance(kw, dict):
+                    k = kw.get('keyword')
+                    if k: kws.append(k)
+                candidates.append({'id': pid, 'keywords': kws[:8], 'query': term})
+                if len(candidates) >= 6: break
+              if len(candidates) >= 6: break
+            if not candidates:
+              data[word] = []
+              continue
+            thumbs = []
+            for c in candidates:
+              pid = c['id']
+              url = f'https://static.arasaac.org/pictograms/{pid}/{pid}_500.png'
+              try:
+                r = session.get(url, timeout=30); r.raise_for_status()
+                im = Image.open(io.BytesIO(r.content)).convert('RGB')
+                im.thumbnail((260, 260))
+                tile = Image.new('RGB', (300, 340), 'white')
+                tile.paste(im, ((300-im.width)//2, 10))
+                d = ImageDraw.Draw(tile)
+                d.text((8, 275), f'{word} | {pid}', fill='black')
+                label = ', '.join(c['keywords'][:4])
+                d.text((8, 296), label[:42], fill='black')
+                d.text((8, 317), c['query'][:42], fill='black')
+                thumbs.append(tile)
+              except Exception as e:
+                print(word, pid, 'IMAGE ERROR', e, flush=True)
+            if thumbs:
+              sheet = Image.new('RGB', (300*len(thumbs), 340), '#dddddd')
+              for i, tile in enumerate(thumbs): sheet.paste(tile, (300*i, 0))
+              sheet.save(f'candidate-pack/contact/{word}.jpg', quality=90)
+            data[word] = candidates
+            print(word, [(c['id'], c['keywords'][:3]) for c in candidates], flush=True)
+            time.sleep(.05)
+
+          with open('candidate-pack/candidates.json', 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+          PY
+          python /tmp/fetch.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arasaac-candidates
+          path: candidate-pack
