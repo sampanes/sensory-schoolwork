@@ -42,7 +42,7 @@ function FamilyChooser() {
           ← Activities
         </Link>
         <h1>Sound It Out</h1>
-        <p>Choose a word family.</p>
+        <p>Choose a word family.</p>(v1.0.2)
         <div className="reading-family-grid">
           {READING_FAMILIES.map((family) => (
             <Link
