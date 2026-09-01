@@ -39,10 +39,10 @@ function FamilyChooser() {
     <main className="reading-chooser">
       <div className="reading-chooser__panel">
         <Link className="reading-chooser__back" to="/" aria-label="Back to activities">
-          ← Activities
+          &lt;- Activities
         </Link>
         <h1>Sound It Out</h1>
-        <p>Choose a word family.</p>(v1.0.2)
+        <p>Choose a word family.</p>
         <div className="reading-family-grid">
           {READING_FAMILIES.map((family) => (
             <Link
@@ -55,6 +55,7 @@ function FamilyChooser() {
             </Link>
           ))}
         </div>
+        <p className="reading-chooser__version">v1.0.2</p>
       </div>
     </main>
   );

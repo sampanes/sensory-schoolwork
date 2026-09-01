@@ -81,3 +81,12 @@ body.reading-deck-active {
   .reading-card--revealed img { width: 84vw; height: 58vh; }
   .reading-card--revealed .reading-word { font-size: clamp(4rem, 22vw, 8rem); }
 }
+
+.reading-chooser__version {
+  margin: 1.25rem 0 0;
+  color: #94a3b8;
+  font-size: .8125rem;
+  font-weight: 600;
+  text-align: right;
+  letter-spacing: .02em;
+}

@@ -1,0 +1,263 @@
+{
+  "source": "ARASAAC (https://arasaac.org)",
+  "license": "CC BY-NC-SA (see https://arasaac.org/terms-of-use)",
+  "author": "Sergio Palao",
+  "owner": "Government of Aragon (Spain)",
+  "resolution": 500,
+  "count": 36,
+  "pictograms": [
+    {
+      "word": "bat",
+      "filename": "bat.png",
+      "arasaacId": 2903,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "bin",
+      "filename": "bin.png",
+      "arasaacId": 2724,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "bug",
+      "filename": "bug.png",
+      "arasaacId": 3301,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "can",
+      "filename": "can.png",
+      "arasaacId": 6544,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "cap",
+      "filename": "cap.png",
+      "arasaacId": 2411,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "cat",
+      "filename": "cat.png",
+      "arasaacId": 2406,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "dog",
+      "filename": "dog.png",
+      "arasaacId": 2517,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "fan",
+      "filename": "fan.png",
+      "arasaacId": 2612,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "fig",
+      "filename": "fig.png",
+      "arasaacId": 2979,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "fin",
+      "filename": "fin.png",
+      "arasaacId": 6895,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "ham",
+      "filename": "ham.png",
+      "arasaacId": 2433,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "hat",
+      "filename": "hat.png",
+      "arasaacId": 2572,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "hog",
+      "filename": "hog.png",
+      "arasaacId": 24972,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "jam",
+      "filename": "jam.png",
+      "arasaacId": 2470,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "jet",
+      "filename": "jet.png",
+      "arasaacId": 9205,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "jug",
+      "filename": "jug.png",
+      "arasaacId": 2435,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "log",
+      "filename": "log.png",
+      "arasaacId": 7819,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "man",
+      "filename": "man.png",
+      "arasaacId": 4665,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "map",
+      "filename": "map.png",
+      "arasaacId": 5505,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "mat",
+      "filename": "mat.png",
+      "arasaacId": 36630,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "mug",
+      "filename": "mug.png",
+      "arasaacId": 9091,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "nap",
+      "filename": "nap.png",
+      "arasaacId": 28426,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "net",
+      "filename": "net.png",
+      "arasaacId": 2548,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "pan",
+      "filename": "pan.png",
+      "arasaacId": 2558,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "pet",
+      "filename": "pet.png",
+      "arasaacId": 25654,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "pig",
+      "filename": "pig.png",
+      "arasaacId": 2327,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "pin",
+      "filename": "pin.png",
+      "arasaacId": 8291,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "ram",
+      "filename": "ram.png",
+      "arasaacId": 9061,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "rat",
+      "filename": "rat.png",
+      "arasaacId": 2821,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "rug",
+      "filename": "rug.png",
+      "arasaacId": 2249,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "tap",
+      "filename": "tap.png",
+      "arasaacId": 2414,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "tin",
+      "filename": "tin.png",
+      "arasaacId": 8280,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "van",
+      "filename": "van.png",
+      "arasaacId": 3275,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "vet",
+      "filename": "vet.png",
+      "arasaacId": 2780,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "wig",
+      "filename": "wig.png",
+      "arasaacId": 14258,
+      "width": 500,
+      "height": 500
+    },
+    {
+      "word": "yam",
+      "filename": "yam.png",
+      "arasaacId": 39818,
+      "width": 500,
+      "height": 500
+    }
+  ],
+  "attribution": "Pictograms author: Sergio Palao. Origin: ARASAAC (https://arasaac.org). License: CC (BY-NC-SA). Owner: Government of Aragon (Spain)."
+}

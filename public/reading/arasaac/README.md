@@ -1,17 +1,50 @@
 # ARASAAC pictograms
 
-This directory is reserved for the locally bundled pictograms used by the
-Sound It Out activity. The application must not fetch artwork at runtime.
+The 36 PNGs in this directory are the artwork for the Sound It Out reading
+activity. They are bundled locally on purpose: the application must not fetch
+artwork at runtime, so it keeps working on a phone with no signal.
+
+## Attribution
 
 ARASAAC pictograms are created by [Sergio Palao](https://www.palao.es/) for the
-Government of Aragon and distributed by
-[ARASAAC](https://arasaac.org/) under the
-[Creative Commons BY-NC-SA 3.0 license](https://creativecommons.org/licenses/by-nc-sa/3.0/).
+Government of Aragon and distributed by [ARASAAC](https://arasaac.org/) under a
+[Creative Commons BY-NC-SA license](https://arasaac.org/terms-of-use).
 
 Attribution: **Pictograms author: Sergio Palao. Origin: ARASAAC
 (https://arasaac.org). License: CC (BY-NC-SA). Owner: Government of Aragon
 (Spain).**
 
-No pictograms are currently checked in because the official ARASAAC API and
-static asset host were unavailable from the build environment during this
-pass. Do not substitute artwork from another pictogram source.
+This is a non-commercial personal project, which is what the NC term requires.
+
+## Contents
+
+One 500x500 PNG per word, named `<word>.png`. `manifest.json` maps each word to
+its filename and its ARASAAC pictogram ID, so any image can be traced back to
+the source or re-downloaded.
+
+Each pictogram was chosen by eye rather than by taking the first search hit,
+because several of these words return the wrong sense by default:
+
+| Word | Meaning chosen | Why it needed care |
+| ---- | -------------- | ------------------ |
+| bat  | the animal     | search leads with the baseball bat |
+| can  | metal tin can  | competes with the verb "can" |
+| tin  | metal tin      | deliberately a different tin from `can.png` |
+| tap  | faucet         | competes with "tap on the back" |
+| fan  | electric fan   | competes with the handheld folding fan |
+| ram  | male sheep     | -- |
+| jam  | fruit spread   | competes with "traffic jam" |
+| yam  | the vegetable  | -- |
+| pin  | straight pin   | competes with bowling pin and rolling pin |
+| bug  | beetle         | search leads with the verb "to bug"; a ladybug was rejected because a child would read it as "ladybug" |
+| mug  | the cup        | search leads with "to mug / robbery" |
+| net  | physical net   | -- |
+| vet  | veterinarian   | plain "vet" only finds the clinic building |
+| fig  | the fruit      | competes with the fig tree |
+| hog  | pig            | deliberately a different pig from `pig.png` |
+| log  | piece of wood  | plain "log" only finds logbook, cologne, psychologist |
+
+## Re-downloading
+
+Pictogram `<id>` at 500px comes from:
+`https://static.arasaac.org/pictograms/<id>/<id>_500.png`
