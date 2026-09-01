@@ -18,9 +18,17 @@ This is a non-commercial personal project, which is what the NC term requires.
 
 ## Contents
 
-One 500x500 PNG per word, named `<word>.png`. `manifest.json` maps each word to
-its filename and its ARASAAC pictogram ID, so any image can be traced back to
-the source or re-downloaded.
+One PNG per word, named `<word>.png`. `manifest.json` maps each word to its
+filename, its pixel size and its ARASAAC pictogram ID, so any image can be
+traced back to the source or re-downloaded.
+
+The files are the 500x500 originals cropped to their artwork bounds. The
+sources average only about 60 percent content -- `log.png` had 151px of
+transparent space above and below the drawing -- and that padding is invisible
+but still occupies layout space, which pushed the word away from the picture in
+the deck. Cropping is done in the original palette mode, so the whole set is
+smaller after the crop (447 KB) than before it (701 KB). Transparency is
+preserved; the deck never draws a border or plate behind a pictogram.
 
 Each pictogram was chosen by eye rather than by taking the first search hit,
 because several of these words return the wrong sense by default:
@@ -48,3 +56,13 @@ because several of these words return the wrong sense by default:
 
 Pictogram `<id>` at 500px comes from:
 `https://static.arasaac.org/pictograms/<id>/<id>_500.png`
+
+That gives back the uncropped 500x500 original. Re-crop it to the alpha
+bounding box in its original mode, or the file will land here several times
+larger than it needs to be:
+
+```python
+from PIL import Image
+im = Image.open("<id>_500.png")            # mode "P"
+im.crop(im.convert("RGBA").getbbox()).save("<word>.png", optimize=True)
+```

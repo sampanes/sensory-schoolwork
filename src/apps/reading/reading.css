@@ -60,16 +60,35 @@ body.reading-deck-active {
   line-height: .9;
   letter-spacing: -.04em;
 }
+/*
+ * Both rows are content-sized and the pair is centred as a unit, so the word
+ * sits directly under the picture instead of being pushed to the floor by a
+ * 1fr row. The PNGs are cropped to their artwork, so the image box has no
+ * transparent padding of its own to open up a gap.
+ */
 .reading-card--revealed {
-  grid-template-rows: minmax(0, 1fr) auto;
-  gap: 1vmin;
+  grid-template-rows: auto auto;
+  align-content: center;
+  gap: 1.5vmin;
 }
+/*
+ * height drives the scale and width follows the aspect ratio, so a wide word
+ * like "log" and a tall one like "man" both grow to the same visual height.
+ * max-width reins in the wide ones, shrinking height to match.
+ */
 .reading-card--revealed img {
-  width: min(68vw, 70vh);
-  height: min(65vh, 58vw);
+  height: 52vh;
+  width: auto;
+  max-width: 62vw;
+  /*
+   * With an explicit height, max-width clamps the box without re-deriving the
+   * height, which squashes very wide pictograms ("log"). object-fit keeps the
+   * artwork's own ratio inside that clamped box. It only letterboxes for the
+   * few images wider than the box ratio, and only by a handful of pixels.
+   */
   object-fit: contain;
 }
-.reading-card--revealed .reading-word { font-size: clamp(4rem, 18vmin, 11rem); }
+.reading-card--revealed .reading-word { font-size: clamp(3.5rem, 28vmin, 15rem); }
 .reading-zone { position: absolute; inset-block: 0; margin: 0; border: 0; padding: 0; background: transparent; cursor: pointer; }
 .reading-zone--previous { left: 0; width: 20%; }
 .reading-zone--reveal { left: 20%; width: 60%; }
@@ -78,8 +97,8 @@ body.reading-deck-active {
 
 @media (orientation: portrait) {
   .reading-word { font-size: clamp(6rem, 34vw, 15rem); }
-  .reading-card--revealed img { width: 84vw; height: 58vh; }
-  .reading-card--revealed .reading-word { font-size: clamp(4rem, 22vw, 8rem); }
+  .reading-card--revealed img { height: 50vh; width: auto; max-width: 86vw; }
+  .reading-card--revealed .reading-word { font-size: clamp(4rem, 32vw, 12rem); }
 }
 
 .reading-chooser__version {
