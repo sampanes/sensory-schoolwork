@@ -124,13 +124,19 @@ function ReadingDeck({ familyId }: { familyId: string }) {
       }
       if (event.key === "Escape" || event.key === "ArrowDown") leaveDeck();
     };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [leaveDeck, move, toggle]);
+
+  useEffect(() => {
     const preventNativeTouch = (event: TouchEvent) => event.preventDefault();
     document.documentElement.classList.add("reading-deck-active");
     document.body.classList.add("reading-deck-active");
-    window.addEventListener("keydown", onKeyDown);
     document.addEventListener("touchmove", preventNativeTouch, { passive: false });
+
     return () => {
-      window.removeEventListener("keydown", onKeyDown);
       document.removeEventListener("touchmove", preventNativeTouch);
       document.documentElement.classList.remove("reading-deck-active");
       document.body.classList.remove("reading-deck-active");
@@ -145,7 +151,7 @@ function ReadingDeck({ familyId }: { familyId: string }) {
         if (document.fullscreenElement) void document.exitFullscreen?.().catch(() => undefined);
       }
     };
-  }, [leaveDeck, move, toggle]);
+  }, []);
 
   return (
     <main
