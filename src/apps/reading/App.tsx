@@ -55,7 +55,12 @@ function FamilyChooser() {
             </Link>
           ))}
         </div>
-        <p className="reading-chooser__version">{__BUILD_STAMP__}</p>
+        {/* Only the sha is shown; the full stamp stays in the title and in the
+            bundle, so the deploy check still works without the date taking up
+            three quarters of the label. */}
+        <p className="reading-chooser__version" title={__BUILD_STAMP__}>
+          {__BUILD_STAMP__.split(" ")[0]}
+        </p>
       </div>
     </main>
   );
