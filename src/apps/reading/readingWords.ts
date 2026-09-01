@@ -10,8 +10,22 @@ export type WordFamily = {
   words: ReadingWord[];
 };
 
+const BASE_URL = import.meta.env.BASE_URL ?? "/";
+
+function withBaseUrl(path: string) {
+  const normalizedBase = BASE_URL.endsWith("/") ? BASE_URL : `${BASE_URL}/`;
+  const normalizedPath = path.startsWith("/") ? path.slice(1) : path;
+  return `${normalizedBase}${normalizedPath}`;
+}
+
+/**
+ * Every word below has a matching PNG in public/reading/arasaac/, picked by
+ * hand so the picture shows the intended noun (bat the animal, tap the
+ * faucet, log the piece of wood). See that directory's manifest.json for the
+ * ARASAAC pictogram ID behind each file.
+ */
 const words = (...entries: string[]): ReadingWord[] =>
-  entries.map((word) => ({ word, image: null }));
+  entries.map((word) => ({ word, image: withBaseUrl(`reading/arasaac/${word}.png`) }));
 
 /**
  * V1 curriculum. Order is deliberate: the stable ending is repeated while the
