@@ -1,4 +1,4 @@
-name: Temporary ARASAAC candidate pack
+name: Temporary ARASAAC final pack
 
 on:
   push:
@@ -15,55 +15,83 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install requests pillow
-      - name: Resolve final candidates
+      - name: Package curated assets
         shell: bash
         run: |
-          cat > /tmp/fetch.py <<'PY'
+          cat > /tmp/pack.py <<'PY'
           import io,json,os
-          from urllib.parse import quote
           import requests
           from PIL import Image,ImageDraw
-          targets={
-            'log':['tree trunk','firewood','wood','log'],
-            'mat':['floor mat','door mat','doormat','welcome mat','mat'],
-            'hog':['wild boar','hog','pig'],
+
+          selected = {
+            'bat': (2903, 'bat animal'),
+            'cat': (2406, 'cat'),
+            'hat': (2572, 'hat'),
+            'mat': (39003, 'floor mat'),
+            'rat': (2821, 'rat animal'),
+            'can': (6544, 'tin can/container'),
+            'fan': (8480, 'physical fan'),
+            'man': (4665, 'adult male person'),
+            'pan': (2558, 'frying pan'),
+            'van': (3275, 'van vehicle'),
+            'cap': (2411, 'cap/hat'),
+            'map': (5505, 'map'),
+            'nap': (35891, 'person taking a nap'),
+            'tap': (32650, 'water faucet/tap'),
+            'ham': (2433, 'ham food'),
+            'jam': (2470, 'strawberry jam/food spread'),
+            'ram': (9061, 'male sheep/ram'),
+            'yam': (39818, 'yam vegetable'),
+            'bin': (2724, 'rubbish bin/container'),
+            'fin': (6895, 'fish fin'),
+            'pin': (8291, 'physical pin'),
+            'tin': (6544, 'tin can/container'),
+            'bug': (3301, 'beetle/bug insect'),
+            'jug': (2435, 'jug/pitcher'),
+            'mug': (9091, 'drinking mug'),
+            'rug': (2249, 'rug/carpet'),
+            'jet': (9205, 'jet airplane'),
+            'net': (2548, 'physical net'),
+            'pet': (25654, 'pets/domestic animals'),
+            'vet': (2780, 'veterinarian/person'),
+            'fig': (2979, 'fig fruit'),
+            'pig': (2327, 'pig'),
+            'wig': (14258, 'wig'),
+            'dog': (2517, 'dog'),
+            'hog': (24972, 'pig/hog'),
+            'log': (7819, 'cut wood log'),
           }
-          s=requests.Session(); s.headers['User-Agent']='sensory-schoolwork asset curation'
-          os.makedirs('candidate-pack-3/contact',exist_ok=True); out={}
-          for word,terms in targets.items():
-            seen=set(); cs=[]
-            for term in terms:
-              for mode in ('bestsearch','search'):
-                try:
-                  r=s.get(f'https://api.arasaac.org/v1/pictograms/en/{mode}/{quote(term)}',timeout=30)
-                  arr=r.json() if r.ok else []
-                except Exception: arr=[]
-                for obj in arr[:10]:
-                  pid=int(obj['_id'])
-                  if pid in seen: continue
-                  seen.add(pid); kws=[k.get('keyword') for k in obj.get('keywords',[]) if isinstance(k,dict) and k.get('keyword')]
-                  cs.append({'id':pid,'keywords':kws[:10],'query':term})
-                  if len(cs)>=16: break
-                if len(cs)>=16: break
-              if len(cs)>=16: break
-            out[word]=cs; tiles=[]
-            for c in cs:
-              pid=c['id']
-              try:
-                r=s.get(f'https://static.arasaac.org/pictograms/{pid}/{pid}_500.png',timeout=30); r.raise_for_status()
-                im=Image.open(io.BytesIO(r.content)).convert('RGB'); im.thumbnail((240,240))
-                t=Image.new('RGB',(270,320),'white'); t.paste(im,((270-im.width)//2,5)); d=ImageDraw.Draw(t)
-                d.text((6,250),f'{word} | {pid}',fill='black'); d.text((6,270),', '.join(c['keywords'][:4])[:40],fill='black'); d.text((6,295),c['query'][:40],fill='black'); tiles.append(t)
-              except Exception as e: print('image',word,pid,e)
-            if tiles:
-              cols=4; rows=(len(tiles)+3)//4; sh=Image.new('RGB',(270*cols,320*rows),'#ddd')
-              for i,t in enumerate(tiles): sh.paste(t,((i%4)*270,(i//4)*320))
-              sh.save(f'candidate-pack-3/contact/{word}.jpg',quality=90)
-            print(word,[(c['id'],c['keywords'][:4],c['query']) for c in cs],flush=True)
-          json.dump(out,open('candidate-pack-3/candidates.json','w'),indent=2)
+          out='reading-arasaac'; os.makedirs(out,exist_ok=True)
+          s=requests.Session(); s.headers['User-Agent']='sensory-schoolwork asset packaging'
+          manifest={
+            'source':'ARASAAC',
+            'license':'CC BY-NC-SA 3.0',
+            'attribution':'Pictograms author: Sergio Palao. Origin: ARASAAC (https://arasaac.org). License: CC (BY-NC-SA). Owner: Government of Aragon (Spain).',
+            'images':{}
+          }
+          thumbs=[]
+          for word,(pid,meaning) in selected.items():
+            url=f'https://static.arasaac.org/pictograms/{pid}/{pid}_500.png'
+            r=s.get(url,timeout=30); r.raise_for_status()
+            im=Image.open(io.BytesIO(r.content)); im.verify()
+            open(f'{out}/{word}.png','wb').write(r.content)
+            im=Image.open(io.BytesIO(r.content)).convert('RGBA')
+            manifest['images'][word]={'file':f'{word}.png','pictogramId':pid,'meaning':meaning,'sourceUrl':f'https://arasaac.org/pictograms/en/{pid}'}
+            canvas=Image.new('RGB',(220,245),'white')
+            bg=Image.new('RGBA',im.size,'white'); bg.alpha_composite(im)
+            v=bg.convert('RGB'); v.thumbnail((200,200))
+            canvas.paste(v,((220-v.width)//2,5)); ImageDraw.Draw(canvas).text((8,218),f'{word}  [{pid}]',fill='black')
+            thumbs.append(canvas)
+          with open(f'{out}/manifest.json','w',encoding='utf-8') as f: json.dump(manifest,f,indent=2,ensure_ascii=False)
+          readme='''# ARASAAC reading pictograms\n\n36 locally bundled pictograms for the Sound It Out activity. Filenames match the curriculum words; `manifest.json` records the selected ARASAAC pictogram ID and intended meaning for each.\n\nPictograms author: **Sergio Palao**. Origin: **ARASAAC** (https://arasaac.org). Owner: **Government of Aragon (Spain)**. License: **Creative Commons BY-NC-SA 3.0**.\n\nThese files are vendored for local use by the application; no runtime ARASAAC requests are required.\n'''
+          open(f'{out}/README.md','w',encoding='utf-8').write(readme)
+          sheet=Image.new('RGB',(220*6,245*6),'#ddd')
+          for i,t in enumerate(thumbs): sheet.paste(t,((i%6)*220,(i//6)*245))
+          sheet.save(f'{out}/contact-sheet.jpg',quality=92)
+          assert len([x for x in os.listdir(out) if x.endswith('.png')])==36
           PY
-          python /tmp/fetch.py
+          python /tmp/pack.py
       - uses: actions/upload-artifact@v4
         with:
-          name: arasaac-candidates-3
-          path: candidate-pack-3
+          name: reading-arasaac
+          path: reading-arasaac
