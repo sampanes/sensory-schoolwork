@@ -4,8 +4,6 @@ import { getPreferredSpellingVoice } from "../../utils/speechPreferences";
 import { getReadingFamily, READING_FAMILIES } from "./readingWords";
 import "./reading.css";
 
-let readingEnteredFullscreen = false;
-
 type LockableOrientation = ScreenOrientation & {
   lock?: (orientation: "landscape") => Promise<void>;
   unlock?: () => void;
@@ -15,7 +13,6 @@ async function prepareReadingDeck() {
   if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
     try {
       await document.documentElement.requestFullscreen();
-      readingEnteredFullscreen = true;
     } catch {
       // Fullscreen is an enhancement. Orientation may still be lockable.
     }
@@ -146,10 +143,7 @@ function ReadingDeck({ familyId }: { familyId: string }) {
       } catch {
         // Best-effort cleanup for browsers with partial orientation support.
       }
-      if (readingEnteredFullscreen) {
-        readingEnteredFullscreen = false;
-        if (document.fullscreenElement) void document.exitFullscreen?.().catch(() => undefined);
-      }
+      if (document.fullscreenElement) void document.exitFullscreen?.().catch(() => undefined);
     };
   }, []);
 
