@@ -1,6 +1,6 @@
 export type ReadingWord = {
   word: string;
-  /** A local Mulberry SVG path, or null when no suitable symbol is available. */
+  /** A bundled ARASAAC PNG URL, or null when no suitable symbol is available. */
   image: string | null;
 };
 
