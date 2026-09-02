@@ -10,6 +10,44 @@
 .reading-chooser__back { color: #475569; font-weight: 700; text-decoration: none; }
 .reading-chooser h1 { margin: 1.5rem 0 0; font-size: clamp(2rem, 8vw, 3rem); line-height: 1; }
 .reading-chooser p { margin: .75rem 0 1.5rem; color: #475569; font-size: 1.125rem; }
+/*
+ * Needs the extra class to outrank `.reading-chooser p`, which is (0,1,1) and
+ * otherwise wins on font-size, color and margin. It has to stay above the
+ * media queries too: those add no specificity, so a base rule placed after
+ * them would win and silently undo the compact overrides.
+ */
+.reading-chooser .reading-chooser__version {
+  margin: .875rem 0 0;
+  color: #94a3b8;
+  font-size: .75rem;
+  font-weight: 500;
+  text-align: right;
+  letter-spacing: .02em;
+}
+
+.reading-length {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: .75rem;
+  margin: 0 0 .75rem;
+}
+.reading-length__option {
+  min-height: 3rem;
+  border: 2px solid #cbd5e1;
+  border-radius: 1rem;
+  background: white;
+  color: #475569;
+  font-size: 1.125rem;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.reading-length__option--active {
+  border-color: #0284c7;
+  background: #0284c7;
+  color: white;
+}
+.reading-length__option:focus-visible { outline: 4px solid #0ea5e9; outline-offset: 2px; }
 
 .reading-family-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; }
 .reading-family {
@@ -95,21 +133,26 @@ body.reading-deck-active {
 .reading-zone--next { right: 0; width: 20%; }
 .reading-zone:focus-visible { outline: 4px solid #0ea5e9; outline-offset: -6px; }
 
+/*
+ * A phone held in landscape gives the chooser about 360px of height, and the
+ * full-size panel needs roughly 540px, so the family grid fell below the fold.
+ * Everything here just tightens the same layout; nothing is hidden, and the
+ * touch targets stay comfortably above the 44px minimum.
+ */
+@media (max-height: 520px) {
+  .reading-chooser { padding: .5rem; }
+  .reading-chooser h1 { margin-top: .5rem; font-size: clamp(1.5rem, 6vw, 2rem); }
+  .reading-chooser p { margin: .375rem 0 .625rem; font-size: 1rem; }
+  .reading-length { gap: .5rem; margin-bottom: .5rem; }
+  .reading-length__option { min-height: 2.75rem; font-size: 1rem; }
+  .reading-family-grid { gap: .5rem; }
+  .reading-family { min-height: 2.75rem; font-size: clamp(1.125rem, 5vw, 1.5rem); }
+  .reading-chooser .reading-chooser__version { margin-top: .5rem; }
+}
+
 @media (orientation: portrait) {
   .reading-word { font-size: clamp(6rem, 34vw, 15rem); }
   .reading-card--revealed img { height: 50vh; width: auto; max-width: 86vw; }
   .reading-card--revealed .reading-word { font-size: clamp(4rem, 32vw, 12rem); }
 }
 
-/*
- * Needs the extra class to outrank `.reading-chooser p`, which is (0,1,1) and
- * otherwise wins on font-size, color and margin.
- */
-.reading-chooser .reading-chooser__version {
-  margin: .875rem 0 0;
-  color: #94a3b8;
-  font-size: .75rem;
-  font-weight: 500;
-  text-align: right;
-  letter-spacing: .02em;
-}

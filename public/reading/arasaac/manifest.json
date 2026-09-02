@@ -6,7 +6,7 @@
   "attribution": "Pictograms author: Sergio Palao. Origin: ARASAAC (https://arasaac.org). License: CC (BY-NC-SA). Owner: Government of Aragon (Spain).",
   "sourceResolution": 500,
   "cropped": "each file is the 500x500 source cropped to its alpha bounding box",
-  "count": 36,
+  "count": 48,
   "pictograms": [
     {
       "word": "bat",
@@ -23,11 +23,32 @@
       "height": 456
     },
     {
+      "word": "boat",
+      "filename": "boat.png",
+      "arasaacId": 8714,
+      "width": 463,
+      "height": 475
+    },
+    {
       "word": "bug",
       "filename": "bug.png",
       "arasaacId": 3301,
       "width": 437,
       "height": 460
+    },
+    {
+      "word": "cake",
+      "filename": "cake.png",
+      "arasaacId": 2579,
+      "width": 411,
+      "height": 444
+    },
+    {
+      "word": "camp",
+      "filename": "camp.png",
+      "arasaacId": 25912,
+      "width": 479,
+      "height": 386
     },
     {
       "word": "can",
@@ -49,6 +70,13 @@
       "arasaacId": 2406,
       "width": 486,
       "height": 218
+    },
+    {
+      "word": "coat",
+      "filename": "coat.png",
+      "arasaacId": 2242,
+      "width": 318,
+      "height": 450
     },
     {
       "word": "dog",
@@ -77,6 +105,13 @@
       "arasaacId": 6895,
       "width": 494,
       "height": 479
+    },
+    {
+      "word": "goat",
+      "filename": "goat.png",
+      "arasaacId": 2295,
+      "width": 333,
+      "height": 411
     },
     {
       "word": "ham",
@@ -121,6 +156,20 @@
       "height": 424
     },
     {
+      "word": "lamp",
+      "filename": "lamp.png",
+      "arasaacId": 4936,
+      "width": 332,
+      "height": 454
+    },
+    {
+      "word": "lock",
+      "filename": "lock.png",
+      "arasaacId": 6957,
+      "width": 437,
+      "height": 478
+    },
+    {
       "word": "log",
       "filename": "log.png",
       "arasaacId": 7819,
@@ -163,6 +212,13 @@
       "height": 479
     },
     {
+      "word": "nest",
+      "filename": "nest.png",
+      "arasaacId": 7173,
+      "width": 493,
+      "height": 252
+    },
+    {
       "word": "net",
       "filename": "net.png",
       "arasaacId": 2548,
@@ -198,11 +254,25 @@
       "height": 375
     },
     {
+      "word": "rake",
+      "filename": "rake.png",
+      "arasaacId": 9120,
+      "width": 364,
+      "height": 468
+    },
+    {
       "word": "ram",
       "filename": "ram.png",
       "arasaacId": 9061,
       "width": 458,
       "height": 443
+    },
+    {
+      "word": "ramp",
+      "filename": "ramp.png",
+      "arasaacId": 2542,
+      "width": 460,
+      "height": 429
     },
     {
       "word": "rat",
@@ -217,6 +287,13 @@
       "arasaacId": 2249,
       "width": 490,
       "height": 332
+    },
+    {
+      "word": "sock",
+      "filename": "sock.png",
+      "arasaacId": 8339,
+      "width": 269,
+      "height": 426
     },
     {
       "word": "tap",
@@ -238,6 +315,13 @@
       "arasaacId": 3275,
       "width": 492,
       "height": 236
+    },
+    {
+      "word": "vest",
+      "filename": "vest.png",
+      "arasaacId": 2698,
+      "width": 294,
+      "height": 450
     },
     {
       "word": "vet",
