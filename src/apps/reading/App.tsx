@@ -1,7 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
-import { getPreferredSpellingVoice } from "../../utils/speechPreferences";
-import { getReadingFamily, READING_FAMILIES } from "./readingWords";
+import {
+  getPreferredSpellingVoice,
+  getStoredReadingWordLength,
+  setStoredReadingWordLength,
+} from "../../utils/speechPreferences";
+import {
+  getReadingFamilies,
+  getReadingFamily,
+  READING_WORD_LENGTHS,
+  type WordLength,
+} from "./readingWords";
 import "./reading.css";
 
 type LockableOrientation = ScreenOrientation & {
@@ -27,6 +36,17 @@ async function prepareReadingDeck() {
 
 function FamilyChooser() {
   const navigate = useNavigate();
+  /*
+   * Persisted rather than plain state: leaving a deck remounts this component,
+   * so without it a child working through the four-letter families would be
+   * dropped back on the three-letter grid after every word.
+   */
+  const [wordLength, setWordLength] = useState<WordLength>(getStoredReadingWordLength);
+
+  const chooseLength = (length: WordLength) => {
+    setWordLength(length);
+    setStoredReadingWordLength(length);
+  };
 
   const chooseFamily = (event: React.MouseEvent<HTMLAnchorElement>, familyId: string) => {
     event.preventDefault();
@@ -43,8 +63,23 @@ function FamilyChooser() {
         </Link>
         <h1>Sound It Out</h1>
         <p>Choose a word family.</p>
+        <div className="reading-length" role="group" aria-label="Word length">
+          {READING_WORD_LENGTHS.map((length) => (
+            <button
+              key={length}
+              type="button"
+              className={`reading-length__option ${
+                length === wordLength ? "reading-length__option--active" : ""
+              }`}
+              aria-pressed={length === wordLength}
+              onClick={() => chooseLength(length)}
+            >
+              {length} Letters
+            </button>
+          ))}
+        </div>
         <div className="reading-family-grid">
-          {READING_FAMILIES.map((family) => (
+          {getReadingFamilies(wordLength).map((family) => (
             <Link
               key={family.id}
               to={`/reading/${family.id}`}

@@ -131,3 +131,21 @@ export function setStoredMathDebugCaptureRunLength(length: number) {
     String(normalizedLength)
   );
 }
+
+export const READING_WORD_LENGTH_STORAGE_KEY = "reading.wordLength";
+
+export function getStoredReadingWordLength(): 3 | 4 {
+  if (typeof window === "undefined") {
+    return 3;
+  }
+
+  return window.localStorage.getItem(READING_WORD_LENGTH_STORAGE_KEY) === "4" ? 4 : 3;
+}
+
+export function setStoredReadingWordLength(wordLength: 3 | 4) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(READING_WORD_LENGTH_STORAGE_KEY, String(wordLength));
+}
