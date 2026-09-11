@@ -17,16 +17,28 @@ import {
 import { getStoredMathProblemConfig, setStoredMathProblemConfig } from "../utils/mathPreferences";
 import {
   formatSpellingCustomListEntry,
-  getStoredSpellingCustomListEnabled,
   getStoredSpellingCustomListText,
+  getStoredSpellingPackIds,
+  getStoredSpellingRoundLength,
+  getStoredSpellingSource,
+  MAX_SPELLING_ROUND_LENGTH,
+  MIN_SPELLING_ROUND_LENGTH,
   parseSpellingCustomList,
   serializeSpellingCustomList,
-  setStoredSpellingCustomListEnabled,
   setStoredSpellingCustomListText,
+  setStoredSpellingPackIds,
+  setStoredSpellingRoundLength,
+  setStoredSpellingSource,
+  type SpellingSource,
 } from "../utils/spellingPreferences";
-import { getBanksForGrade } from "../apps/spelling/banks";
+import { describeSelection, getBanksForGrade, resolveSelectedWords } from "../apps/spelling/banks";
 import { getStoredGrade, gradeLabel } from "../utils/gradePreferences";
 import { cn } from "../utils/cn";
+
+const SPELLING_SOURCES: readonly { value: SpellingSource; label: string }[] = [
+  { value: "packs", label: "Use packs" },
+  { value: "typed", label: "Type my own" },
+] as const;
 
 type RangeValue = {
   min: number;
@@ -474,7 +486,9 @@ export default function ConfigurationsPage() {
   const [mathSetupExpanded, setMathSetupExpanded] = useState(false);
   const [spellingSetupExpanded, setSpellingSetupExpanded] = useState(false);
   const [sentenceSetupExpanded, setSentenceSetupExpanded] = useState(false);
-  const [spellingCustomListEnabled, setSpellingCustomListEnabled] = useState(false);
+  const [spellingSource, setSpellingSource] = useState<SpellingSource>("packs");
+  const [spellingPackIds, setSpellingPackIds] = useState<string[]>([]);
+  const [spellingRoundLength, setSpellingRoundLength] = useState(getStoredSpellingRoundLength);
   const [spellingCustomListEntries, setSpellingCustomListEntries] = useState(parseSpellingCustomList(getStoredSpellingCustomListText()));
   const [spellingCustomListDraft, setSpellingCustomListDraft] = useState("");
   const [expandedSection, setExpandedSection] = useState<MathSectionKey>(null);
@@ -485,17 +499,10 @@ export default function ConfigurationsPage() {
     setMathDebugCaptureAllEnabled(getStoredMathDebugCaptureAllEnabled());
     setMathDebugBiasFoursEnabled(getStoredMathDebugBiasFoursEnabled());
     setMathDebugCaptureRunLengthState(getStoredMathDebugCaptureRunLength());
-    const storedSpellingEntries = parseSpellingCustomList(getStoredSpellingCustomListText());
-    const storedSpellingEnabled = getStoredSpellingCustomListEnabled();
-
-    setSpellingCustomListEntries(storedSpellingEntries);
-
-    if (storedSpellingEntries.length > 0) {
-      setSpellingCustomListEnabled(true);
-      setStoredSpellingCustomListEnabled(true);
-    } else {
-      setSpellingCustomListEnabled(storedSpellingEnabled);
-    }
+    setSpellingCustomListEntries(parseSpellingCustomList(getStoredSpellingCustomListText()));
+    setSpellingSource(getStoredSpellingSource());
+    setSpellingPackIds(getStoredSpellingPackIds());
+    setSpellingRoundLength(getStoredSpellingRoundLength());
   }, []);
 
   useEffect(() => {
@@ -537,14 +544,31 @@ export default function ConfigurationsPage() {
 
   const parsedCustomSpellingWords = spellingCustomListEntries;
 
+  const selectedPackWords = useMemo(
+    () => resolveSelectedWords(spellingPackIds, grade),
+    [grade, spellingPackIds]
+  );
+  /*
+   * What a round will actually hold, which is what the parent wants to know:
+   * the pool can be 90 words while the round draws 15.
+   */
+  const spellingPoolSize =
+    spellingSource === "typed" && parsedCustomSpellingWords.length > 0
+      ? parsedCustomSpellingWords.length
+      : selectedPackWords.length;
+  const spellingRoundSummary = `${Math.min(spellingRoundLength, Math.max(spellingPoolSize, 1))} of ${spellingPoolSize} words`;
+
   const commitSpellingCustomListEntries = (entries: typeof spellingCustomListEntries) => {
     setSpellingCustomListEntries(entries);
     setStoredSpellingCustomListText(serializeSpellingCustomList(entries));
+  };
 
-    if (entries.length > 0) {
-      setSpellingCustomListEnabled(true);
-      setStoredSpellingCustomListEnabled(true);
-    }
+  const toggleSpellingPack = (packId: string) => {
+    const next = spellingPackIds.includes(packId)
+      ? spellingPackIds.filter((id) => id !== packId)
+      : [...spellingPackIds, packId];
+    setSpellingPackIds(next);
+    setStoredSpellingPackIds(next);
   };
 
   const commitSpellingCustomListDraft = () => {
@@ -930,138 +954,221 @@ export default function ConfigurationsPage() {
             <>
               <div className="mt-5 rounded-[1.6rem] border border-zinc-200 bg-zinc-50 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <h3 className="text-sm font-semibold tracking-tight text-zinc-950">Custom spelling list</h3>
+                  <h3 className="text-sm font-semibold tracking-tight text-zinc-950">Word list</h3>
                   <div className="rounded-2xl border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold text-zinc-700">
-                    {parsedCustomSpellingWords.length} words saved
+                    {spellingRoundSummary}
                   </div>
                 </div>
 
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <CompactToggle
-                    active={spellingCustomListEnabled}
-                    activeLabel="Custom list on"
-                    inactiveLabel="Built-in list"
-                    onClick={() => {
-                      const nextValue = !spellingCustomListEnabled;
-                      setSpellingCustomListEnabled(nextValue);
-                      setStoredSpellingCustomListEnabled(nextValue);
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSpellingCustomListDraft("");
-                      commitSpellingCustomListEntries([]);
-                      setSpellingCustomListEnabled(false);
-                      setStoredSpellingCustomListEnabled(false);
-                    }}
-                    className="rounded-full border border-zinc-300 bg-white px-3 py-2 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50"
-                  >
-                    Reset custom list
-                  </button>
+                <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Word source">
+                  {SPELLING_SOURCES.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => {
+                        setSpellingSource(option.value);
+                        setStoredSpellingSource(option.value);
+                      }}
+                      aria-pressed={spellingSource === option.value}
+                      className={cn(
+                        "flex items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-semibold transition",
+                        spellingSource === option.value
+                          ? "border-zinc-950 bg-zinc-950 text-white"
+                          : "border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"
+                      )}
+                    >
+                      {/* A tick, not just a filled background: which source is
+                          live has to survive anything that repaints colours. */}
+                      {spellingSource === option.value ? (
+                        <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden>
+                          <path d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : null}
+                      {option.label}
+                    </button>
+                  ))}
                 </div>
 
-                <div className="mt-4">
-                  <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                    Load a bank into the editor
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {banksForGrade.map((bank) => (
+                {spellingSource === "packs" ? (
+                  <>
+                    <div className="mt-4 grid gap-2">
+                      {banksForGrade.map((bank) => {
+                        const checked = spellingPackIds.includes(bank.id);
+                        return (
+                          <button
+                            key={bank.id}
+                            type="button"
+                            onClick={() => toggleSpellingPack(bank.id)}
+                            aria-pressed={checked}
+                            className={cn(
+                              "flex items-center justify-between gap-3 rounded-2xl border bg-white px-4 py-3 text-left transition",
+                              checked ? "border-zinc-950" : "border-zinc-300 hover:bg-zinc-50"
+                            )}
+                          >
+                            <span className="flex min-w-0 items-center gap-3">
+                              <span
+                                className={cn(
+                                  "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition",
+                                  checked ? "border-zinc-950 bg-zinc-950 text-white" : "border-zinc-300"
+                                )}
+                                aria-hidden
+                              >
+                                {/* Rendered only when ticked. Hiding it with a transparent
+                                    colour instead leaves it visible wherever something
+                                    repaints colours -- a dark-mode extension, forced-colours
+                                    mode -- and then every pack looks selected. */}
+                                {checked ? (
+                                  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="3">
+                                    <path d="M5 13l4 4L19 7" />
+                                  </svg>
+                                ) : null}
+                              </span>
+                              <span className="truncate text-sm font-semibold text-zinc-900">{bank.label}</span>
+                            </span>
+                            <span className="shrink-0 text-xs font-semibold text-zinc-500">{bank.words.length} words</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <p className="mt-3 text-xs text-zinc-500">
+                      {spellingPackIds.length === 0
+                        ? `Nothing ticked, so ${gradeLabel(grade)} falls back to ${describeSelection([], grade)}.`
+                        : "Tick as many as you want; they shuffle together into one pool."}{" "}
+                      Change the level on the home page to see other grades.
+                    </p>
+
+                    <div className="mt-4">
+                      <SliderField
+                        title="Words per round"
+                        value={spellingRoundLength}
+                        min={MIN_SPELLING_ROUND_LENGTH}
+                        max={MAX_SPELLING_ROUND_LENGTH}
+                        presets={[10, 15, 20, 30]}
+                        onChange={(next) => {
+                          setSpellingRoundLength(next);
+                          setStoredSpellingRoundLength(next);
+                        }}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="mt-4">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                        Start from a pack
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {banksForGrade.map((bank) => (
+                          <button
+                            key={bank.id}
+                            type="button"
+                            onClick={() => {
+                              setSpellingCustomListDraft(serializeSpellingCustomList([...bank.words]));
+                              window.setTimeout(() => {
+                                spellingCustomListInputRef.current?.focus();
+                              }, 0);
+                            }}
+                            className="rounded-full border border-zinc-300 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 transition hover:border-zinc-950 hover:bg-zinc-50"
+                            title={`Copy ${bank.words.length} words into the editor to edit`}
+                          >
+                            {bank.label} ({bank.words.length})
+                          </button>
+                        ))}
+                      </div>
+                      <p className="mt-2 text-xs text-zinc-500">
+                        Copies the words in so you can edit them. This makes a typed list, not a pack.
+                      </p>
+                    </div>
+
+                  <label className="mt-4 block text-sm font-semibold text-zinc-700" htmlFor="spelling-custom-list">
+                    Words and optional sentences
+                  </label>
+                  <div className="mt-2 rounded-2xl border border-zinc-300 bg-white px-3 py-3 transition focus-within:border-zinc-950">
+                    {parsedCustomSpellingWords.length > 0 ? (
+                      <div className="mb-3 flex flex-wrap gap-2">
+                        {parsedCustomSpellingWords.map((entry, index) => (
+                          <button
+                            key={`${entry.word}-${index}-${entry.sentence ?? ""}`}
+                            type="button"
+                            onClick={() => {
+                              const nextEntries = parsedCustomSpellingWords.filter((_, entryIndex) => entryIndex !== index);
+                              setSpellingCustomListDraft(formatSpellingCustomListEntry(entry));
+                              commitSpellingCustomListEntries(nextEntries);
+                            }}
+                            className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-left text-xs font-medium text-violet-800 transition hover:border-violet-300 hover:bg-violet-100"
+                            title="Click to bring this entry back into the editor"
+                          >
+                            {formatSpellingCustomListEntry(entry)}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+
+                    <div className="flex items-start gap-2">
+                      <textarea
+                        ref={spellingCustomListInputRef}
+                        id="spelling-custom-list"
+                        rows={3}
+                        value={spellingCustomListDraft}
+                        onChange={(event) => {
+                          setSpellingCustomListDraft(event.target.value);
+                        }}
+                        onKeyDown={(event) => {
+                          event.stopPropagation();
+
+                          if (event.key === "Enter" && !event.shiftKey) {
+                            event.preventDefault();
+                            void commitSpellingCustomListDraft();
+                            return;
+                          }
+
+                          if (event.key === "Backspace" && !spellingCustomListDraft && parsedCustomSpellingWords.length > 0) {
+                            event.preventDefault();
+                            const nextEntries = parsedCustomSpellingWords.slice(0, -1);
+                            const poppedEntry = parsedCustomSpellingWords[parsedCustomSpellingWords.length - 1];
+                            setSpellingCustomListDraft(formatSpellingCustomListEntry(poppedEntry));
+                            commitSpellingCustomListEntries(nextEntries);
+                          }
+                        }}
+                        placeholder={"word; sentence\nword; sentence\nword"}
+                        className="block min-h-24 w-full resize-y border-0 bg-transparent px-1 py-1 text-sm leading-6 text-zinc-900 outline-none"
+                        spellCheck={false}
+                      />
                       <button
-                        key={bank.id}
                         type="button"
                         onClick={() => {
-                          setSpellingCustomListDraft(serializeSpellingCustomList([...bank.words]));
-                          window.setTimeout(() => {
-                            spellingCustomListInputRef.current?.focus();
-                          }, 0);
-                        }}
-                        className="rounded-full border border-zinc-300 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 transition hover:border-zinc-950 hover:bg-zinc-50"
-                        title={`Paste ${bank.words.length} words into the editor`}
-                      >
-                        {bank.label} ({bank.words.length})
-                      </button>
-                    ))}
-                  </div>
-                  <p className="mt-2 text-xs text-zinc-500">
-                    Pastes into the editor below. Edit if you want, then press Enter or Add all to save.
-                    Showing banks for {gradeLabel(grade)}; change the level on the home page to see more.
-                  </p>
-                </div>
-
-                <label className="mt-4 block text-sm font-semibold text-zinc-700" htmlFor="spelling-custom-list">
-                  Words and optional sentences
-                </label>
-                <div className="mt-2 rounded-2xl border border-zinc-300 bg-white px-3 py-3 transition focus-within:border-zinc-950">
-                  {parsedCustomSpellingWords.length > 0 ? (
-                    <div className="mb-3 flex flex-wrap gap-2">
-                      {parsedCustomSpellingWords.map((entry, index) => (
-                        <button
-                          key={`${entry.word}-${index}-${entry.sentence ?? ""}`}
-                          type="button"
-                          onClick={() => {
-                            const nextEntries = parsedCustomSpellingWords.filter((_, entryIndex) => entryIndex !== index);
-                            setSpellingCustomListDraft(formatSpellingCustomListEntry(entry));
-                            commitSpellingCustomListEntries(nextEntries);
-                          }}
-                          className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-left text-xs font-medium text-violet-800 transition hover:border-violet-300 hover:bg-violet-100"
-                          title="Click to bring this entry back into the editor"
-                        >
-                          {formatSpellingCustomListEntry(entry)}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-
-                  <div className="flex items-start gap-2">
-                    <textarea
-                      ref={spellingCustomListInputRef}
-                      id="spelling-custom-list"
-                      rows={3}
-                      value={spellingCustomListDraft}
-                      onChange={(event) => {
-                        setSpellingCustomListDraft(event.target.value);
-                      }}
-                      onKeyDown={(event) => {
-                        event.stopPropagation();
-
-                        if (event.key === "Enter" && !event.shiftKey) {
-                          event.preventDefault();
                           void commitSpellingCustomListDraft();
-                          return;
-                        }
+                        }}
+                        className="shrink-0 rounded-xl border border-zinc-300 bg-zinc-50 px-3 py-2 text-xs font-semibold text-zinc-700 transition hover:border-zinc-400 hover:bg-zinc-100"
+                      >
+                        Add all
+                      </button>
+                    </div>
+                  </div>
 
-                        if (event.key === "Backspace" && !spellingCustomListDraft && parsedCustomSpellingWords.length > 0) {
-                          event.preventDefault();
-                          const nextEntries = parsedCustomSpellingWords.slice(0, -1);
-                          const poppedEntry = parsedCustomSpellingWords[parsedCustomSpellingWords.length - 1];
-                          setSpellingCustomListDraft(formatSpellingCustomListEntry(poppedEntry));
-                          commitSpellingCustomListEntries(nextEntries);
-                        }
-                      }}
-                      placeholder={"word; sentence\nword; sentence\nword"}
-                      className="block min-h-24 w-full resize-y border-0 bg-transparent px-1 py-1 text-sm leading-6 text-zinc-900 outline-none"
-                      spellCheck={false}
-                    />
+                  <div className="mt-3 text-sm text-zinc-500">
+                    {parsedCustomSpellingWords.length > 0
+                      ? `Saved ${parsedCustomSpellingWords.length} custom word${parsedCustomSpellingWords.length === 1 ? "" : "s"}.`
+                      : spellingCustomListDraft
+                        ? "Press Enter to save the current draft."
+                        : "No custom words saved yet."}
+                  </div>
+
                     <button
                       type="button"
                       onClick={() => {
-                        void commitSpellingCustomListDraft();
+                        setSpellingCustomListDraft("");
+                        commitSpellingCustomListEntries([]);
+                        setSpellingSource("packs");
+                        setStoredSpellingSource("packs");
                       }}
-                      className="shrink-0 rounded-xl border border-zinc-300 bg-zinc-50 px-3 py-2 text-xs font-semibold text-zinc-700 transition hover:border-zinc-400 hover:bg-zinc-100"
+                      className="mt-4 rounded-full border border-zinc-300 bg-white px-3 py-2 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50"
                     >
-                      Add all
+                      Clear typed list and use packs
                     </button>
-                  </div>
-                </div>
-
-                <div className="mt-3 text-sm text-zinc-500">
-                  {parsedCustomSpellingWords.length > 0
-                    ? `Saved ${parsedCustomSpellingWords.length} custom word${parsedCustomSpellingWords.length === 1 ? "" : "s"}.`
-                    : spellingCustomListDraft
-                      ? "Press Enter to save the current draft."
-                      : "No custom words saved yet."}
-                </div>
+                  </>
+                )}
               </div>
 
               {!speechSupported ? (
