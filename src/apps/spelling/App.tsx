@@ -5,10 +5,11 @@ import {
   loadHandwritingModel,
   recognizeCanvas,
 } from "./handwritingModel";
-import { SPELLING_WORDS } from "./spellingWords";
+import { getDefaultSpellingWords } from "./banks";
 import { generateTemplateSentence } from "./sentenceGen/templates";
 import WritingCanvas, { type WritingCanvasHandle } from "../../components/WritingCanvas";
 import { cn } from "../../utils/cn";
+import { getStoredGrade, type Grade } from "../../utils/gradePreferences";
 import { getPreferredSpellingVoice } from "../../utils/speechPreferences";
 import { getStoredSpellingCustomListEnabled, getStoredSpellingCustomListText, parseSpellingCustomList } from "../../utils/spellingPreferences";
 
@@ -22,20 +23,36 @@ type PlaylistWord = {
 
 const CONFIDENCE_THRESHOLD = 0.35;
 const MARGIN_THRESHOLD = 0.05;
-// TODO: bug found by a tester — a single dot can sometimes pass MIN_INK_RATIO
-// and the model still recognizes it as 's' (and a few other letters) with
-// enough confidence to auto-advance. Need a stricter ink-shape check (stroke
-// length, bounding-box aspect ratio, or required minimum stroke count) before
-// running the recognizer.
 const MIN_INK_RATIO = 0.0005;
+/*
+ * How much of the box a letter has to span, on its longer side, before the
+ * recognizer is allowed to see it.
+ *
+ * MIN_INK_RATIO alone counts pixels, and a single dot clears it: a tester
+ * found that tapping the canvas once was read as 's' with enough confidence
+ * to auto-advance, which spells a whole word in taps. Extent is the signal
+ * that separates a dot from a letter -- a dot is tiny in both directions,
+ * while even a thin 'l' or 'i' is tall, and a squat 'o' or 'e' is wide.
+ * The longer side is used so a short-but-wide letter still passes.
+ *
+ * This deliberately does not gate the apostrophe, which is a small mark by
+ * definition and is checked by ink and height placement instead.
+ */
+const MIN_LETTER_EXTENT = 0.18;
 
 function percent(value: number) {
   return `${Math.round(value * 100)}%`;
 }
 
-function buildPlaylist(): PlaylistWord[] {
+function buildPlaylist(grade: Grade): PlaylistWord[] {
   const customWords = parseSpellingCustomList(getStoredSpellingCustomListText());
-  const baseWords = customWords.length > 0 ? customWords : [...SPELLING_WORDS];
+  /*
+   * A saved custom list always wins: it is this week's list off the printed
+   * sheet. Without one, fall back to the default for the active grade rather
+   * than to a fixed list, so moving the home page switch to 2 actually
+   * changes what she practices.
+   */
+  const baseWords = customWords.length > 0 ? customWords : [...getDefaultSpellingWords(grade)];
   const playlist: PlaylistWord[] = baseWords.map((entry, originalIndex) => ({
     word: entry.word,
     sentence:
@@ -72,7 +89,8 @@ export default function App() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const lastSpokenAtRef = useRef(0);
   const userUnlockedAudioRef = useRef(false);
-  const [activeWords, setActiveWords] = useState<PlaylistWord[]>(buildPlaylist);
+  const [grade] = useState(getStoredGrade);
+  const [activeWords, setActiveWords] = useState<PlaylistWord[]>(() => buildPlaylist(grade));
   const totalLetters = useMemo(
     () => activeWords.reduce((total, entry) => total + entry.word.length, 0),
     [activeWords]
@@ -306,6 +324,21 @@ export default function App() {
       return;
     }
 
+    /*
+     * Checked before the model runs, not after: a dot should never reach the
+     * recognizer, and there is no point spending a prediction on one.
+     */
+    const placement = getInkPlacement(canvas);
+    const letterExtent = Math.max(placement.widthRatio, placement.heightRatio);
+
+    if (placement.hasInk && placement.inkRatio >= MIN_INK_RATIO && letterExtent < MIN_LETTER_EXTENT) {
+      setFeedbackState("sloppy");
+      setFeedbackText("That mark is too small to be a letter. Write it big enough to fill the box.");
+      playErrorSound("sloppy");
+      clearCanvas();
+      return;
+    }
+
     const result = await recognizeCanvas(modelRef.current, canvas);
 
     if (!result.hasInk || result.inkRatio < MIN_INK_RATIO) {
@@ -392,7 +425,7 @@ export default function App() {
 
   const restart = () => {
     cancelTimers();
-    setActiveWords(buildPlaylist());
+    setActiveWords(buildPlaylist(grade));
     setWordIndex(0);
     setLetterIndex(0);
     setIsFinished(false);
