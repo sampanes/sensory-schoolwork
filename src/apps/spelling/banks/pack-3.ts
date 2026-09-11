@@ -3,6 +3,7 @@ import type { SpellingBank } from "./types";
 export const PACK_3: SpellingBank = {
   id: "pack-3",
   label: "Pack 3",
+  grade: 1,
   words: [
     { word: "price", sentence: "The price of the toy is on the little tag." },
     { word: "become", sentence: "Caterpillars become beautiful butterflies after a while." },

@@ -3,6 +3,7 @@ import confetti from 'canvas-confetti';
 import { useNavigate } from 'react-router-dom';
 import { PuzzleData } from './types/puzzle';
 import puzzleDataRaw from './data/puzzles.json';
+import { getStoredGrade, isAvailableAtGrade } from '../../utils/gradePreferences';
 import { usePersistentGameState } from './hooks/usePersistentGameState';
 
 const defaultPuzzleData = puzzleDataRaw as unknown as PuzzleData;
@@ -111,6 +112,15 @@ const Connectors: React.FC<ConnectorsProps> = ({ selectedIndices, gridRefs, cont
 /* ------------------------------------------------------------------ */
 const SentencesApp: React.FC = () => {
   const navigate = useNavigate();
+  /*
+   * Read once per mount rather than watched: the grade switch lives on the
+   * home page, and coming back from there remounts this component.
+   */
+  const [grade] = useState(getStoredGrade);
+  const visiblePuzzles = useMemo(
+    () => defaultPuzzleData.puzzles.filter((puzzle) => isAvailableAtGrade(puzzle.grade ?? 1, grade)),
+    [grade],
+  );
   const {
     currentPuzzleIndex,
     setCurrentPuzzleIndex,
@@ -119,7 +129,7 @@ const SentencesApp: React.FC = () => {
     resetAll,
     jumpToPuzzle,
     isLoaded,
-  } = usePersistentGameState(defaultPuzzleData.puzzles.length);
+  } = usePersistentGameState(visiblePuzzles.length);
 
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
   const [isWon, setIsWon] = useState(false);
@@ -128,7 +138,7 @@ const SentencesApp: React.FC = () => {
   const [showWinMessage, setShowWinMessage] = useState(false);
   const [jumpToPuzzleValue, setJumpToPuzzleValue] = useState('');
 
-  const currentPuzzle = defaultPuzzleData.puzzles[currentPuzzleIndex];
+  const currentPuzzle = visiblePuzzles[currentPuzzleIndex];
   const gridRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -203,7 +213,7 @@ const SentencesApp: React.FC = () => {
   };
 
   const nextPuzzle = () => {
-    if (currentPuzzleIndex < defaultPuzzleData.puzzles.length - 1) {
+    if (currentPuzzleIndex < visiblePuzzles.length - 1) {
       setCurrentPuzzleIndex(currentPuzzleIndex + 1);
       resetPuzzle();
     }
@@ -218,16 +228,30 @@ const SentencesApp: React.FC = () => {
 
   const handleJumpToPuzzle = () => {
     const num = parseInt(jumpToPuzzleValue, 10);
-    if (!isNaN(num) && num >= 1 && num <= defaultPuzzleData.puzzles.length) {
+    if (!isNaN(num) && num >= 1 && num <= visiblePuzzles.length) {
       jumpToPuzzle(num - 1); // Convert to 0-indexed
       resetPuzzle();
       setJumpToPuzzleValue('');
     }
   };
 
-  const isComplete = isWon && currentPuzzleIndex === defaultPuzzleData.puzzles.length - 1;
-  const progressPercent = ((currentPuzzleIndex + 1) / defaultPuzzleData.puzzles.length) * 100;
+  const isComplete = isWon && currentPuzzleIndex === visiblePuzzles.length - 1;
+  const progressPercent = ((currentPuzzleIndex + 1) / visiblePuzzles.length) * 100;
   const completedCount = completedPuzzles.size;
+
+  if (isLoaded && visiblePuzzles.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 flex flex-col items-center justify-center gap-6 p-6 text-center text-white">
+        <p className="text-lg text-slate-300">No sentence mazes for this grade yet.</p>
+        <button
+          onClick={() => navigate('/')}
+          className="px-8 py-4 bg-white text-slate-900 rounded-2xl font-bold text-lg active:scale-95 transition-all"
+        >
+          Back to activities
+        </button>
+      </div>
+    );
+  }
 
   if (!isLoaded || !currentPuzzle) {
     return (
@@ -246,7 +270,7 @@ const SentencesApp: React.FC = () => {
             All Done!
           </h1>
           <p className="text-lg text-slate-300 leading-relaxed">
-            You traced every sentence through the maze. {completedCount === defaultPuzzleData.puzzles.length ? 'All puzzles solved!' : `${completedCount} puzzles completed!`}
+            You traced every sentence through the maze. {completedCount === visiblePuzzles.length ? 'All puzzles solved!' : `${completedCount} puzzles completed!`}
           </p>
           <div className="flex flex-col gap-3">
             <button
@@ -308,9 +332,9 @@ const SentencesApp: React.FC = () => {
               value={jumpToPuzzleValue}
               onChange={(e) => setJumpToPuzzleValue(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleJumpToPuzzle()}
-              placeholder={`1 to ${defaultPuzzleData.puzzles.length}`}
+              placeholder={`1 to ${visiblePuzzles.length}`}
               min="1"
-              max={defaultPuzzleData.puzzles.length}
+              max={visiblePuzzles.length}
               autoFocus
               className="w-full px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-lg mb-4 focus:outline-none focus:border-indigo-500"
             />
@@ -343,7 +367,7 @@ const SentencesApp: React.FC = () => {
           </button>
           <div className="text-center">
             <p className="text-amber-400 font-bold tracking-widest text-[11px] uppercase">
-              Puzzle {currentPuzzleIndex + 1} / {defaultPuzzleData.puzzles.length}
+              Puzzle {currentPuzzleIndex + 1} / {visiblePuzzles.length}
             </p>
             <h1 className="text-2xl md:text-3xl font-black tracking-tight">Word Maze</h1>
             <p className="text-slate-400 text-xs mt-1">
@@ -389,7 +413,7 @@ const SentencesApp: React.FC = () => {
           </button>
           <button
             onClick={nextPuzzle}
-            disabled={currentPuzzleIndex === defaultPuzzleData.puzzles.length - 1}
+            disabled={currentPuzzleIndex === visiblePuzzles.length - 1}
             className="px-3 py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 rounded-lg transition-colors text-xs font-medium"
           >
             Next →
@@ -497,7 +521,7 @@ const SentencesApp: React.FC = () => {
             <p className="text-white text-sm font-bold leading-snug sm:text-base">
               "{currentPuzzle.solution_sentence}"
             </p>
-            {currentPuzzleIndex < defaultPuzzleData.puzzles.length - 1 && (
+            {currentPuzzleIndex < visiblePuzzles.length - 1 && (
               <button
                 onClick={nextPuzzle}
                 className="w-full py-2.5 mt-3 bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-black rounded-2xl transition-all hover:scale-[1.01] active:scale-[0.98] shadow-lg shadow-emerald-500/20 text-sm"

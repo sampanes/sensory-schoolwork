@@ -3,12 +3,13 @@ import type { SpellingBank } from "./types";
 export const PACK_2: SpellingBank = {
   id: "pack-2",
   label: "Pack 2",
+  grade: 1,
   words: [
     { word: "hurt", sentence: "I tripped on the curb and hurt my knee." },
     { word: "maybe", sentence: "Maybe we can go to the park after school." },
     { word: "across", sentence: "She lives in the blue house across the street." },
     { word: "tonight", sentence: "We are having pizza for dinner tonight." },
-    { word: "tenth", sentence: "Today is my tenth day in first grade." },
+    { word: "tenth", sentence: "Today is my tenth day of school." },
     { word: "sir", sentence: "He called his grandfather sir as a sign of respect." },
     { word: "club", sentence: "We started a book club with kids from our class." },
     { word: "these", sentence: "These crayons are mine and those are yours." },

@@ -3,6 +3,7 @@ import type { SpellingBank } from "./types";
 export const CONTRACTIONS: SpellingBank = {
   id: "contractions",
   label: "Contractions",
+  grade: 1,
   words: [
     { word: "I'm", sentence: "I'm so excited about my birthday party." },
     { word: "can't", sentence: "I can't reach the top shelf without a stool." },
