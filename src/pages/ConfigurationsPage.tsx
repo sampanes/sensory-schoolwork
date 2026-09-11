@@ -24,7 +24,8 @@ import {
   setStoredSpellingCustomListEnabled,
   setStoredSpellingCustomListText,
 } from "../utils/spellingPreferences";
-import { BUILTIN_BANKS } from "../apps/spelling/banks";
+import { getBanksForGrade } from "../apps/spelling/banks";
+import { getStoredGrade, gradeLabel } from "../utils/gradePreferences";
 import { cn } from "../utils/cn";
 
 type RangeValue = {
@@ -456,6 +457,12 @@ function ProblemCountSection({
 
 export default function ConfigurationsPage() {
   useGameConfig();
+  /*
+   * The grade is set on the home page; this page only reads it, to keep the
+   * bank list down to what the child is actually working on.
+   */
+  const [grade] = useState(getStoredGrade);
+  const banksForGrade = useMemo(() => getBanksForGrade(grade), [grade]);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoiceURI, setSelectedVoiceURI] = useState("");
   const [speechSupported, setSpeechSupported] = useState(false);
@@ -959,7 +966,7 @@ export default function ConfigurationsPage() {
                     Load a bank into the editor
                   </div>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {BUILTIN_BANKS.map((bank) => (
+                    {banksForGrade.map((bank) => (
                       <button
                         key={bank.id}
                         type="button"
@@ -978,6 +985,7 @@ export default function ConfigurationsPage() {
                   </div>
                   <p className="mt-2 text-xs text-zinc-500">
                     Pastes into the editor below. Edit if you want, then press Enter or Add all to save.
+                    Showing banks for {gradeLabel(grade)}; change the level on the home page to see more.
                   </p>
                 </div>
 
