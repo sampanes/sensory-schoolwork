@@ -5,13 +5,20 @@ import {
   loadHandwritingModel,
   recognizeCanvas,
 } from "./handwritingModel";
-import { getDefaultSpellingWords } from "./banks";
+import { describeSelection, resolveSelectedWords } from "./banks";
+import type { SpellingWord } from "./spellingWords";
 import { generateTemplateSentence } from "./sentenceGen/templates";
 import WritingCanvas, { type WritingCanvasHandle } from "../../components/WritingCanvas";
 import { cn } from "../../utils/cn";
 import { getStoredGrade, type Grade } from "../../utils/gradePreferences";
 import { getPreferredSpellingVoice } from "../../utils/speechPreferences";
-import { getStoredSpellingCustomListEnabled, getStoredSpellingCustomListText, parseSpellingCustomList } from "../../utils/spellingPreferences";
+import {
+  getStoredSpellingCustomListText,
+  getStoredSpellingPackIds,
+  getStoredSpellingRoundLength,
+  getStoredSpellingSource,
+  parseSpellingCustomList,
+} from "../../utils/spellingPreferences";
 
 type FeedbackState = "idle" | "success" | "wrong" | "sloppy" | "word";
 
@@ -44,15 +51,28 @@ function percent(value: number) {
   return `${Math.round(value * 100)}%`;
 }
 
-function buildPlaylist(grade: Grade): PlaylistWord[] {
-  const customWords = parseSpellingCustomList(getStoredSpellingCustomListText());
+/**
+ * The words a session will draw from, and the name to show for them.
+ *
+ * One function so the header can never disagree with the playlist about which
+ * list is loaded.
+ */
+function resolveActiveList(grade: Grade): { words: SpellingWord[]; label: string } {
   /*
-   * A saved custom list always wins: it is this week's list off the printed
-   * sheet. Without one, fall back to the default for the active grade rather
-   * than to a fixed list, so moving the home page switch to 2 actually
-   * changes what she practices.
+   * The typed list is used only when it is the chosen source AND has words in
+   * it, so an empty editor cannot leave a session with nothing to spell.
    */
-  const baseWords = customWords.length > 0 ? customWords : [...getDefaultSpellingWords(grade)];
+  const typedWords = parseSpellingCustomList(getStoredSpellingCustomListText());
+  if (getStoredSpellingSource() === "typed" && typedWords.length > 0) {
+    return { words: typedWords, label: "My list" };
+  }
+
+  const packIds = getStoredSpellingPackIds();
+  return { words: resolveSelectedWords(packIds, grade), label: describeSelection(packIds, grade) };
+}
+
+function buildPlaylist(grade: Grade): PlaylistWord[] {
+  const baseWords = resolveActiveList(grade).words;
   const playlist: PlaylistWord[] = baseWords.map((entry, originalIndex) => ({
     word: entry.word,
     sentence:
@@ -67,7 +87,12 @@ function buildPlaylist(grade: Grade): PlaylistWord[] {
     [playlist[i], playlist[j]] = [playlist[j], playlist[i]];
   }
 
-  return playlist;
+  /*
+   * Shuffle first, then take a round's worth. Several packs together are a
+   * pool to draw from, not one sitting: ticking three of them should not mean
+   * ninety words before she is allowed to stop.
+   */
+  return playlist.slice(0, Math.max(1, getStoredSpellingRoundLength()));
 }
 
 export default function App() {
@@ -90,6 +115,7 @@ export default function App() {
   const lastSpokenAtRef = useRef(0);
   const userUnlockedAudioRef = useRef(false);
   const [grade] = useState(getStoredGrade);
+  const [listLabel] = useState(() => resolveActiveList(grade).label);
   const [activeWords, setActiveWords] = useState<PlaylistWord[]>(() => buildPlaylist(grade));
   const totalLetters = useMemo(
     () => activeWords.reduce((total, entry) => total + entry.word.length, 0),
@@ -487,7 +513,10 @@ export default function App() {
 
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between gap-2 text-xs font-semibold text-slate-500">
-                <span>{wordIndex + 1}/{activeWords.length}</span>
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <span className="truncate text-slate-600" title={listLabel}>{listLabel}</span>
+                  <span className="shrink-0">{wordIndex + 1}/{activeWords.length}</span>
+                </span>
                 <span>{Math.max(letterIndex, 0)}/{currentWord.length}</span>
               </div>
               <div className="mt-2 flex flex-wrap gap-1.5" aria-label="Pack progress">
