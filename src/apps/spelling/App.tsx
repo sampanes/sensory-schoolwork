@@ -514,7 +514,22 @@ export default function App() {
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between gap-2 text-xs font-semibold text-slate-500">
                 <span className="flex min-w-0 items-center gap-1.5">
-                  <span className="truncate text-slate-600" title={listLabel}>{listLabel}</span>
+                  {/*
+                    The name of the loaded list is also the way to change it.
+                    Sized as a tap target rather than a label: on a phone this
+                    is the shortcut that saves a trip through the whole
+                    Configurations page.
+                  */}
+                  <Link
+                    to="/configurations?open=spelling"
+                    className="-my-2 -ml-2 flex min-w-0 items-center gap-1 rounded-full px-2 py-3 text-slate-600 transition active:bg-slate-100"
+                    aria-label={`Word list: ${listLabel}. Tap to change.`}
+                  >
+                    <span className="truncate">{listLabel}</span>
+                    <svg viewBox="0 0 24 24" className="h-3 w-3 shrink-0 opacity-60" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden>
+                      <path d="M9 6l6 6-6 6" />
+                    </svg>
+                  </Link>
                   <span className="shrink-0">{wordIndex + 1}/{activeWords.length}</span>
                 </span>
                 <span>{Math.max(letterIndex, 0)}/{currentWord.length}</span>

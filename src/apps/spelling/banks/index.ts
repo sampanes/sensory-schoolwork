@@ -5,6 +5,7 @@ import { PACK_4 } from "./pack-4";
 import { PACK_5 } from "./pack-5";
 import { PACK_6 } from "./pack-6";
 import { CONTRACTIONS } from "./contractions";
+import { SIGHT_WORDS } from "./sight-words";
 import { STARTER } from "./starter";
 import type { Grade } from "../../../utils/gradePreferences";
 import { isAvailableAtGrade } from "../../../utils/gradePreferences";
@@ -12,9 +13,10 @@ import type { SpellingWord } from "../spellingWords";
 import type { SpellingBank } from "./types";
 
 export type { SpellingBank };
-export { STARTER };
+export { SIGHT_WORDS, STARTER };
 
 export const BUILTIN_BANKS: readonly SpellingBank[] = [
+  SIGHT_WORDS,
   STARTER,
   PACK_1,
   PACK_2,
@@ -39,7 +41,11 @@ export function getBanksForGrade(grade: Grade): readonly SpellingBank[] {
  * words to Pack 5. Add a line here when a new grade gets its own default.
  */
 const DEFAULT_PACK_IDS_BY_GRADE: Record<Grade, readonly string[]> = {
-  0: [STARTER.id],
+  /*
+   * Sight words rather than the starter list, which is CVC words that Sound It
+   * Out already drills. These are the ones a decoding deck cannot teach.
+   */
+  0: [SIGHT_WORDS.id],
   1: [STARTER.id],
   2: [PACK_6.id],
 };

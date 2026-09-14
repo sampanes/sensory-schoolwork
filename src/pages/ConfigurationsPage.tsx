@@ -1,5 +1,5 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { generateMathProblems, type MathProblemConfig } from "../apps/math/mathProblems";
 import { useGameConfig } from "../apps/sentences/hooks/usePersistentGameState";
 import {
@@ -493,6 +493,27 @@ export default function ConfigurationsPage() {
   const [spellingCustomListDraft, setSpellingCustomListDraft] = useState("");
   const [expandedSection, setExpandedSection] = useState<MathSectionKey>(null);
   const spellingCustomListInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const spellingSectionRef = useRef<HTMLElement | null>(null);
+  const location = useLocation();
+
+  /*
+   * Arriving from the spelling screen's list name opens this section and jumps
+   * to it. On a phone the alternative is landing at the top of a long page and
+   * hunting for the right accordion, which is most of the reason changing the
+   * word list felt like a chore.
+   */
+  useEffect(() => {
+    if (new URLSearchParams(location.search).get("open") !== "spelling") {
+      return;
+    }
+
+    setSpellingSetupExpanded(true);
+    const timer = window.setTimeout(() => {
+      spellingSectionRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [location.search]);
 
   useEffect(() => {
     setMathDebugEnabled(getStoredMathDebugEnabled());
@@ -929,7 +950,10 @@ export default function ConfigurationsPage() {
           ) : null}
         </section>
 
-        <section className="mb-6 rounded-[2rem] border border-zinc-200 bg-white p-5 shadow-[0_20px_60px_-45px_rgba(0,0,0,0.35)]">
+        <section
+          ref={spellingSectionRef}
+          className="mb-6 scroll-mt-4 rounded-[2rem] border border-zinc-200 bg-white p-5 shadow-[0_20px_60px_-45px_rgba(0,0,0,0.35)]"
+        >
           <button
             type="button"
             onClick={() => setSpellingSetupExpanded((current) => !current)}
@@ -971,7 +995,7 @@ export default function ConfigurationsPage() {
                       }}
                       aria-pressed={spellingSource === option.value}
                       className={cn(
-                        "flex items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-semibold transition",
+                        "flex items-center gap-1.5 rounded-full border px-4 py-3.5 text-sm font-semibold transition",
                         spellingSource === option.value
                           ? "border-zinc-950 bg-zinc-950 text-white"
                           : "border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"
@@ -1000,12 +1024,13 @@ export default function ConfigurationsPage() {
                             type="button"
                             onClick={() => toggleSpellingPack(bank.id)}
                             aria-pressed={checked}
+                            aria-label={bank.label + ", " + bank.words.length + " words"}
                             className={cn(
-                              "flex items-center justify-between gap-3 rounded-2xl border bg-white px-4 py-3 text-left transition",
+                              "flex items-center justify-between gap-2 rounded-2xl border bg-white px-3 py-3 text-left transition",
                               checked ? "border-zinc-950" : "border-zinc-300 hover:bg-zinc-50"
                             )}
                           >
-                            <span className="flex min-w-0 items-center gap-3">
+                            <span className="flex min-w-0 items-center gap-2">
                               <span
                                 className={cn(
                                   "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition",
@@ -1025,7 +1050,9 @@ export default function ConfigurationsPage() {
                               </span>
                               <span className="truncate text-sm font-semibold text-zinc-900">{bank.label}</span>
                             </span>
-                            <span className="shrink-0 text-xs font-semibold text-zinc-500">{bank.words.length} words</span>
+                            <span className="shrink-0 text-xs font-semibold text-zinc-500" aria-hidden>
+                              {bank.words.length} words
+                            </span>
                           </button>
                         );
                       })}
