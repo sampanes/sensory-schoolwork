@@ -32,11 +32,11 @@ const MODEL_CANDIDATES: ModelCandidate[] = [
   },
 ];
 
-// ── Topology: which digits are compatible with each hole count ───────────────
-// 0 holes → strokes with no enclosed region  (1 2 3 5 7)
-// 1 hole  → one enclosed loop                (0 2 4 6 9)  — 2 included because
+// -- Topology: which digits are compatible with each hole count ---------------
+// 0 holes -> strokes with no enclosed region  (1 2 3 5 7)
+// 1 hole  -> one enclosed loop                (0 2 4 6 9)  -- 2 included because
 //           a loopy 2 closes its bottom curve into a hole
-// 2 holes → two enclosed loops               (8)
+// 2 holes -> two enclosed loops               (8)
 const TOPOLOGY_COMPAT: ReadonlyMap<number, ReadonlySet<number>> = new Map([
   [0, new Set([1, 2, 3, 5, 7])],
   [1, new Set([0, 2, 4, 6, 9])],
@@ -216,7 +216,7 @@ function cropToCanvas(sourceCanvas: HTMLCanvasElement, bounds: InkBounds) {
 }
 
 /**
- * Count enclosed background regions (holes) in a 28×28 canvas using
+ * Count enclosed background regions (holes) in a 28x28 canvas using
  * flood-fill from the border. Each unreachable background component is a hole.
  *
  * Threshold of 200: anything darker than near-white is treated as ink.
@@ -344,14 +344,14 @@ export async function recognizeCanvas(
   const inkRatio = bounds.pixelCount / (imageData.width * imageData.height);
   const { canvas: croppedCanvas, region: cropRegion } = cropToCanvas(canvas, bounds);
 
-  // ── Pipeline constants ───────────────────────────────────────────────────────
-  // edgePadding=4 matches MNIST's standard: digit in a 20×20 center,
-  // 4px white border on each side → 28×28 total.
+  // -- Pipeline constants -------------------------------------------------------
+  // edgePadding=4 matches MNIST's standard: digit in a 20x20 center,
+  // 4px white border on each side -> 28x28 total.
   const targetDimension = 28;
   const edgePadding = 4;
   const resizeDimension = targetDimension - edgePadding * 2; // 20
 
-  // ── Step 1: squarify (center shorter axis on white canvas) ──────────────────
+  // -- Step 1: squarify (center shorter axis on white canvas) ------------------
   const squareSize = Math.max(croppedCanvas.width, croppedCanvas.height);
   const deltaX = Math.floor((squareSize - croppedCanvas.width) / 2);
   const deltaY = Math.floor((squareSize - croppedCanvas.height) / 2);
@@ -369,10 +369,10 @@ export async function recognizeCanvas(
   squareContext.fillRect(0, 0, squareSize, squareSize);
   squareContext.drawImage(croppedCanvas, deltaX, deltaY);
 
-  // ── Step 2: build 28×28 viewable canvas for debug/topology ──────────────────
-  // White background, black ink — pre-inversion view of what the model receives.
-  // drawImage bilinear ≈ tf.image.resizeBilinear so it faithfully represents
-  // the 20×20 digit region with 4px white borders.
+  // -- Step 2: build 28x28 viewable canvas for debug/topology ------------------
+  // White background, black ink -- pre-inversion view of what the model receives.
+  // drawImage bilinear ~= tf.image.resizeBilinear so it faithfully represents
+  // the 20x20 digit region with 4px white borders.
   const processedCanvas = document.createElement("canvas");
   processedCanvas.width = targetDimension;
   processedCanvas.height = targetDimension;
@@ -410,20 +410,20 @@ export async function recognizeCanvas(
     modelInputPreviewCtx.putImageData(previewImageData, 0, 0);
   }
 
-  // ── Step 3: topology — count enclosed loops in the 28×28 bitmask ────────────
+  // -- Step 3: topology -- count enclosed loops in the 28x28 bitmask ------------
   const holeCount = countHoles(processedCanvas);
 
-  // ── Step 4: run the model ────────────────────────────────────────────────────
+  // -- Step 4: run the model ----------------------------------------------------
   const isCNN = (model.inputs[0].shape?.length ?? 0) >= 4;
 
   const scores = tf.tidy(() => {
     // fromPixels: white bg (255), black ink (~0)
     let tensor = tf.browser.fromPixels(squareCanvas, 1) as tf.Tensor3D;
-    // Resize digit to 20×20
+    // Resize digit to 20x20
     tensor = tf.image.resizeBilinear(tensor, [resizeDimension, resizeDimension]);
-    // Pad 4px with 255 (white) → 28×28
+    // Pad 4px with 255 (white) -> 28x28
     tensor = tf.pad(tensor, [[edgePadding, edgePadding], [edgePadding, edgePadding], [0, 0]], 255) as tf.Tensor3D;
-    // Invert + normalize: white→0.0 (background), black→1.0 (ink) — MNIST format
+    // Invert + normalize: white->0.0 (background), black->1.0 (ink) -- MNIST format
     const invertedFloat = tf.scalar(255).sub(tensor.toFloat()) as tf.Tensor3D;
     const prepared = loadedModelInfo?.inputMode === "inverted_uint8"
       ? invertedFloat
@@ -439,7 +439,7 @@ export async function recognizeCanvas(
     return emptyResult(inkRatio);
   }
 
-  // ── Step 5: rank + topology filter ──────────────────────────────────────────
+  // -- Step 5: rank + topology filter ------------------------------------------
   const rawRanked = scores
     .map((score, index) => ({ score, index }))
     .sort((a, b) => b.score - a.score);
@@ -449,7 +449,7 @@ export async function recognizeCanvas(
   const best = ranked[0];
   const second = ranked[1] ?? ranked[0];
 
-  // ── Step 6: build result ─────────────────────────────────────────────────────
+  // -- Step 6: build result -----------------------------------------------------
   const allScores = scores
     .map((score, index) => ({ digit: DIGITS[index] ?? String(index), score }))
     .sort((a, b) => b.score - a.score);
@@ -465,7 +465,7 @@ export async function recognizeCanvas(
     resizeDimension,
     edgePadding,
     targetDimension,
-    normalization: "inverted: 1 - pixel/255  (white→0.0, black→1.0)",
+    normalization: "inverted: 1 - pixel/255  (white->0.0, black->1.0)",
     isCNN,
     modelInputShape: isCNN
       ? `[1, ${targetDimension}, ${targetDimension}, 1]`

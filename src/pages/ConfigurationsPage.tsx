@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { generateMathProblems, type MathProblemConfig } from "../apps/math/mathProblems";
 import { useGameConfig } from "../apps/sentences/hooks/usePersistentGameState";
@@ -389,7 +389,7 @@ function OperatorSection({
           <div className="text-xl font-black">-</div>
           <div className="mt-1">Subtraction</div>
         </button>
-        {/* Future operators × ÷ live here when added; keep the grid 4-wide. */}
+        {/* Future operators x / live here when added; keep the grid 4-wide. */}
       </div>
     </CollapsibleSection>
   );
@@ -794,7 +794,7 @@ export default function ConfigurationsPage() {
             {[
               { id: "within10", label: "Within 10" },
               { id: "within20", label: "Within 20" },
-              { id: "nineFactFamily", label: "9 ± x" },
+              { id: "nineFactFamily", label: "9 +/- x" },
               { id: "wideOpen", label: "Wide open" },
             ].map((preset) => (
               <button

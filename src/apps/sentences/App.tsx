@@ -283,7 +283,7 @@ const SentencesApp: React.FC = () => {
               onClick={() => navigate('/')}
               className="px-10 py-4 bg-slate-800 text-slate-300 rounded-2xl font-bold text-lg hover:scale-105 active:scale-95 transition-all"
             >
-              ← Home
+              &lt;- Home
             </button>
           </div>
         </div>
@@ -363,7 +363,7 @@ const SentencesApp: React.FC = () => {
             onClick={() => navigate('/')}
             className="text-slate-400 hover:text-white text-sm transition-colors border border-slate-700 px-3 py-1.5 rounded-lg bg-slate-900/60 backdrop-blur-sm"
           >
-            ← Home
+            &lt;- Home
           </button>
           <div className="text-center">
             <p className="text-amber-400 font-bold tracking-widest text-[11px] uppercase">
@@ -397,7 +397,7 @@ const SentencesApp: React.FC = () => {
             disabled={currentPuzzleIndex === 0}
             className="px-3 py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 rounded-lg transition-colors text-xs font-medium"
           >
-            ← Prev
+            &lt;- Prev
           </button>
           <button
             onClick={() => setJumpToPuzzleValue(String(currentPuzzleIndex + 1))}
@@ -416,7 +416,7 @@ const SentencesApp: React.FC = () => {
             disabled={currentPuzzleIndex === visiblePuzzles.length - 1}
             className="px-3 py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 rounded-lg transition-colors text-xs font-medium"
           >
-            Next →
+            Next -&gt;
           </button>
         </div>
       </header>
@@ -526,7 +526,7 @@ const SentencesApp: React.FC = () => {
                 onClick={nextPuzzle}
                 className="w-full py-2.5 mt-3 bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-black rounded-2xl transition-all hover:scale-[1.01] active:scale-[0.98] shadow-lg shadow-emerald-500/20 text-sm"
               >
-                Next Puzzle →
+                Next Puzzle -&gt;
               </button>
             )}
           </div>

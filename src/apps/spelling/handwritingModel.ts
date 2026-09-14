@@ -98,7 +98,7 @@ export async function loadHandwritingModel() {
           model = await tf.loadLayersModel(url);
           break;
         } catch {
-          console.warn(`Failed to load model from ${url}, trying next…`);
+          console.warn(`Failed to load model from ${url}, trying next...`);
         }
       }
 
