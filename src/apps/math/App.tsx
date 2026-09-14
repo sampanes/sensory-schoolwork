@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   canvasHasInk,
@@ -524,7 +524,7 @@ export default function App() {
             reason: "wrong_digit_runner_up_accept",
             result,
           });
-          // Model was on the fence and the correct digit was runner-up â€” accept it.
+          // Model was on the fence and the correct digit was runner-up -- accept it.
         } else if (result.confidence < LOW_CONFIDENCE_THRESHOLD) {
           persistDebugEntry({
             timestamp: new Date(),
@@ -1057,8 +1057,8 @@ export default function App() {
                     <div>Runner-up: {info.result?.runnerUp ?? "(none)"}</div>
                     <div>Runner-up conf: {info.result ? percent(info.result.runnerUpConfidence) : "0%"}</div>
                     <div>Margin: {margin}</div>
-                    <div>Holes: {info.result?.preprocessMeta?.holeCount ?? "â€”"}</div>
-                    <div>Topo changed: {info.result?.preprocessMeta ? (info.result.preprocessMeta.topologyFiltered ? "yes" : "no") : "â€”"}</div>
+                    <div>Holes: {info.result?.preprocessMeta?.holeCount ?? "--"}</div>
+                    <div>Topo changed: {info.result?.preprocessMeta ? (info.result.preprocessMeta.topologyFiltered ? "yes" : "no") : "--"}</div>
                   </div>
                 );
               })}

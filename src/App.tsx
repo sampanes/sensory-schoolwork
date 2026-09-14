@@ -11,7 +11,7 @@ const ReadingApp = lazy(() => import("./apps/reading/App"));
 function AppFallback() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 text-slate-600">
-      <p className="text-sm font-semibold">Loading…</p>
+      <p className="text-sm font-semibold">Loading...</p>
     </div>
   );
 }
