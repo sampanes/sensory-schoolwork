@@ -1,0 +1,44 @@
+{
+  "source": "OpenAI built-in image generation",
+  "generatedAt": "2026-09-20",
+  "thirdPartyAssets": false,
+  "processing": "Alpha-cropped, resized to fit within 800x800, and PNG-optimized",
+  "count": 5,
+  "images": [
+    {
+      "word": "osteichthyes",
+      "filename": "osteichthyes.png",
+      "width": 800,
+      "height": 783,
+      "concept": "Bony fish with a visible skeletal cutaway"
+    },
+    {
+      "word": "nucleotide",
+      "filename": "nucleotide.png",
+      "width": 800,
+      "height": 730,
+      "concept": "Connected phosphate, pentose sugar, and nitrogenous base"
+    },
+    {
+      "word": "planetesimal",
+      "filename": "planetesimal.png",
+      "width": 797,
+      "height": 800,
+      "concept": "Rock and ice accreting into a planet-building body"
+    },
+    {
+      "word": "parangaricutirimícuaro",
+      "filename": "parangaricutirimicuaro.png",
+      "width": 800,
+      "height": 671,
+      "concept": "Tongue-twister association with Parícutin and San Juan Parangaricutiro's lava-surrounded church"
+    },
+    {
+      "word": "axolotl",
+      "filename": "axolotl.png",
+      "width": 800,
+      "height": 710,
+      "concept": "Pink axolotl with six external gill stalks, little legs, and a finned tail"
+    }
+  ]
+}

@@ -1,16 +1,23 @@
 export type ReadingWord = {
   word: string;
-  /** A bundled ARASAAC PNG URL, or null when no suitable symbol is available. */
+  /** A bundled image URL, or null when no suitable picture is available. */
   image: string | null;
+  /** Optional text and voice hints for words that need language-specific speech. */
+  speechText?: string;
+  speechLanguage?: string;
+  speechRate?: number;
 };
 
 export type WordLength = 3 | 4;
 
-export type WordFamily = {
+export type ReadingDeckDefinition = {
   id: string;
   label: string;
-  wordLength: WordLength;
   words: ReadingWord[];
+};
+
+export type WordFamily = ReadingDeckDefinition & {
+  wordLength: WordLength;
 };
 
 export const READING_WORD_LENGTHS: readonly WordLength[] = [3, 4];
@@ -29,7 +36,7 @@ function withBaseUrl(path: string) {
  * faucet, log the piece of wood). See that directory's manifest.json for the
  * ARASAAC pictogram ID behind each file.
  */
-const words = (...entries: string[]): ReadingWord[] =>
+const arasaacWords = (...entries: string[]): ReadingWord[] =>
   entries.map((word) => ({ word, image: withBaseUrl(`reading/arasaac/${word}.png`) }));
 
 /**
@@ -48,25 +55,47 @@ const words = (...entries: string[]): ReadingWord[] =>
  * tempting families; see public/reading/arasaac/README.md for which and why.
  */
 export const READING_FAMILIES: WordFamily[] = [
-  { id: "at", label: "_AT", wordLength: 3, words: words("bat", "cat", "hat", "mat", "rat") },
-  { id: "an", label: "_AN", wordLength: 3, words: words("can", "fan", "man", "pan", "van") },
-  { id: "ap", label: "_AP", wordLength: 3, words: words("cap", "map", "nap", "tap") },
-  { id: "am", label: "_AM", wordLength: 3, words: words("ham", "jam", "ram", "yam") },
-  { id: "in", label: "_IN", wordLength: 3, words: words("bin", "fin", "pin", "tin") },
-  { id: "ug", label: "_UG", wordLength: 3, words: words("bug", "jug", "mug", "rug") },
-  { id: "et", label: "_ET", wordLength: 3, words: words("jet", "net", "pet", "vet") },
-  { id: "ig", label: "_IG", wordLength: 3, words: words("fig", "pig", "wig") },
-  { id: "og", label: "_OG", wordLength: 3, words: words("dog", "hog", "log") },
+  { id: "at", label: "_AT", wordLength: 3, words: arasaacWords("bat", "cat", "hat", "mat", "rat") },
+  { id: "an", label: "_AN", wordLength: 3, words: arasaacWords("can", "fan", "man", "pan", "van") },
+  { id: "ap", label: "_AP", wordLength: 3, words: arasaacWords("cap", "map", "nap", "tap") },
+  { id: "am", label: "_AM", wordLength: 3, words: arasaacWords("ham", "jam", "ram", "yam") },
+  { id: "in", label: "_IN", wordLength: 3, words: arasaacWords("bin", "fin", "pin", "tin") },
+  { id: "ug", label: "_UG", wordLength: 3, words: arasaacWords("bug", "jug", "mug", "rug") },
+  { id: "et", label: "_ET", wordLength: 3, words: arasaacWords("jet", "net", "pet", "vet") },
+  { id: "ig", label: "_IG", wordLength: 3, words: arasaacWords("fig", "pig", "wig") },
+  { id: "og", label: "_OG", wordLength: 3, words: arasaacWords("dog", "hog", "log") },
 
-  { id: "oat", label: "_OAT", wordLength: 4, words: words("boat", "coat", "goat") },
-  { id: "amp", label: "_AMP", wordLength: 4, words: words("camp", "lamp", "ramp") },
-  { id: "est", label: "_EST", wordLength: 4, words: words("nest", "vest") },
-  { id: "ock", label: "_OCK", wordLength: 4, words: words("lock", "sock") },
-  { id: "ake", label: "_AKE", wordLength: 4, words: words("cake", "rake") },
+  { id: "oat", label: "_OAT", wordLength: 4, words: arasaacWords("boat", "coat", "goat") },
+  { id: "amp", label: "_AMP", wordLength: 4, words: arasaacWords("camp", "lamp", "ramp") },
+  { id: "est", label: "_EST", wordLength: 4, words: arasaacWords("nest", "vest") },
+  { id: "ock", label: "_OCK", wordLength: 4, words: arasaacWords("lock", "sock") },
+  { id: "ake", label: "_AKE", wordLength: 4, words: arasaacWords("cake", "rake") },
 ];
 
-export function getReadingFamily(id: string | undefined) {
-  return READING_FAMILIES.find((family) => family.id === id);
+const advancedImage = (filename: string) => withBaseUrl(`reading/advanced/${filename}.png`);
+
+export const ADVANCED_READING_DECK: ReadingDeckDefinition = {
+  id: "very-advanced",
+  label: "Very advanced",
+  words: [
+    { word: "osteichthyes", image: advancedImage("osteichthyes"), speechRate: 0.72 },
+    { word: "nucleotide", image: advancedImage("nucleotide"), speechRate: 0.72 },
+    { word: "planetesimal", image: advancedImage("planetesimal"), speechRate: 0.72 },
+    {
+      word: "parangaricutirimícuaro",
+      image: advancedImage("parangaricutirimicuaro"),
+      speechText: "Parangaricutirimícuaro",
+      speechLanguage: "es-MX",
+      speechRate: 0.68,
+    },
+    { word: "axolotl", image: advancedImage("axolotl"), speechRate: 0.72 },
+  ],
+};
+
+const READING_DECKS: ReadingDeckDefinition[] = [...READING_FAMILIES, ADVANCED_READING_DECK];
+
+export function getReadingDeck(id: string | undefined) {
+  return READING_DECKS.find((deck) => deck.id === id);
 }
 
 export function getReadingFamilies(wordLength: WordLength) {

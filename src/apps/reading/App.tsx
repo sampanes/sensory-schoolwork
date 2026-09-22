@@ -6,9 +6,11 @@ import {
   setStoredReadingWordLength,
 } from "../../utils/speechPreferences";
 import {
+  ADVANCED_READING_DECK,
   getReadingFamilies,
-  getReadingFamily,
+  getReadingDeck,
   READING_WORD_LENGTHS,
+  type ReadingWord,
   type WordLength,
 } from "./readingWords";
 import "./reading.css";
@@ -48,10 +50,10 @@ function FamilyChooser() {
     setStoredReadingWordLength(length);
   };
 
-  const chooseFamily = (event: React.MouseEvent<HTMLAnchorElement>, familyId: string) => {
+  const chooseDeck = (event: React.MouseEvent<HTMLAnchorElement>, deckId: string) => {
     event.preventDefault();
     void prepareReadingDeck().finally(() => {
-      navigate(`/reading/${familyId}`, { state: { fromReadingChooser: true } });
+      navigate(`/reading/${deckId}`, { state: { fromReadingChooser: true } });
     });
   };
 
@@ -84,12 +86,26 @@ function FamilyChooser() {
               key={family.id}
               to={`/reading/${family.id}`}
               className="reading-family"
-              onClick={(event) => chooseFamily(event, family.id)}
+              onClick={(event) => chooseDeck(event, family.id)}
             >
               {family.label}
             </Link>
           ))}
         </div>
+        <section className="reading-challenge" aria-labelledby="reading-challenge-title">
+          <div className="reading-challenge__copy">
+            <h2 id="reading-challenge-title">Very advanced</h2>
+            <p>Comically difficult words.</p>
+          </div>
+          <Link
+            to={`/reading/${ADVANCED_READING_DECK.id}`}
+            className="reading-challenge__link"
+            onClick={(event) => chooseDeck(event, ADVANCED_READING_DECK.id)}
+            aria-label="Open the Very advanced deck"
+          >
+            Bring it on -&gt;
+          </Link>
+        </section>
         {/* Only the sha is shown; the full stamp stays in the title and in the
             bundle, so the deploy check still works without the date taking up
             three quarters of the label. */}
@@ -101,15 +117,25 @@ function FamilyChooser() {
   );
 }
 
-function speakWord(word: string) {
+function speakWord(entry: ReadingWord) {
   try {
     if (!("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) return;
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(word);
-    utterance.lang = "en-US";
-    utterance.rate = 0.8;
+    const utterance = new SpeechSynthesisUtterance(entry.speechText ?? entry.word);
+    utterance.lang = entry.speechLanguage ?? "en-US";
+    utterance.rate = entry.speechRate ?? 0.8;
     utterance.pitch = 1.05;
-    const voice = getPreferredSpellingVoice();
+
+    const requestedLanguage = entry.speechLanguage?.toLowerCase();
+    const requestedLanguageRoot = requestedLanguage?.split("-")[0];
+    const availableVoices = window.speechSynthesis.getVoices();
+    const languageVoice = requestedLanguage
+      ? availableVoices.find((voice) => voice.lang.toLowerCase() === requestedLanguage) ??
+        availableVoices.find(
+          (voice) => voice.lang.toLowerCase().split("-")[0] === requestedLanguageRoot,
+        )
+      : null;
+    const voice = requestedLanguage ? languageVoice : getPreferredSpellingVoice();
     if (voice) {
       utterance.voice = voice;
       utterance.lang = voice.lang;
@@ -120,15 +146,25 @@ function speakWord(word: string) {
   }
 }
 
-function ReadingDeck({ familyId }: { familyId: string }) {
-  const family = getReadingFamily(familyId)!;
+function ReadingDeck({ deckId }: { deckId: string }) {
+  const deck = getReadingDeck(deckId)!;
   const navigate = useNavigate();
   const location = useLocation();
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
   const touchStartY = useRef<number | null>(null);
-  const current = family.words[index];
+  const current = deck.words[index];
+  const hasRevealedImage = Boolean(revealed && current.image && !imageFailed);
+  const isAdvancedDeck = deck.id === ADVANCED_READING_DECK.id;
+  const wordClassName = [
+    "reading-word",
+    isAdvancedDeck ? "reading-word--advanced" : "",
+    current.word.length > 8 ? "reading-word--long" : "",
+    current.word.length > 16 ? "reading-word--extra-long" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const leaveDeck = useCallback(() => {
     if ((location.state as { fromReadingChooser?: boolean } | null)?.fromReadingChooser) {
@@ -139,18 +175,18 @@ function ReadingDeck({ familyId }: { familyId: string }) {
   }, [location.state, navigate]);
 
   const move = useCallback((amount: number) => {
-    setIndex((value) => (value + amount + family.words.length) % family.words.length);
+    setIndex((value) => (value + amount + deck.words.length) % deck.words.length);
     setRevealed(false);
     setImageFailed(false);
     window.speechSynthesis?.cancel();
-  }, [family.words.length]);
+  }, [deck.words.length]);
 
   const toggle = useCallback(() => {
     setRevealed((value) => {
-      if (!value) speakWord(current.word);
+      if (!value) speakWord(current);
       return !value;
     });
-  }, [current.word]);
+  }, [current]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -199,7 +235,10 @@ function ReadingDeck({ familyId }: { familyId: string }) {
         if (start !== null && end !== undefined && end - start > 90) leaveDeck();
       }}
     >
-      <div className={`reading-card ${revealed ? "reading-card--revealed" : ""}`} aria-live="polite">
+      <div
+        className={`reading-card ${hasRevealedImage ? "reading-card--revealed" : ""}`}
+        aria-live="polite"
+      >
         {revealed && current.image && !imageFailed ? (
           <img
             src={current.image}
@@ -208,18 +247,25 @@ function ReadingDeck({ familyId }: { familyId: string }) {
             onError={() => setImageFailed(true)}
           />
         ) : null}
-        <div className="reading-word">{current.word}</div>
+        <div className={wordClassName} lang={current.speechLanguage}>
+          {current.word}
+        </div>
       </div>
       <button className="reading-zone reading-zone--previous" onClick={() => move(-1)} aria-label="Previous word" />
-      <button className="reading-zone reading-zone--reveal" onClick={toggle} aria-label={revealed ? "Hide answer" : "Reveal answer"} />
+      <button
+        className="reading-zone reading-zone--reveal"
+        onClick={toggle}
+        aria-label={revealed ? "Hide answer" : "Reveal answer"}
+        aria-pressed={revealed}
+      />
       <button className="reading-zone reading-zone--next" onClick={() => move(1)} aria-label="Next word" />
     </main>
   );
 }
 
 export default function ReadingApp() {
-  const { familyId } = useParams();
-  if (!familyId) return <FamilyChooser />;
-  if (!getReadingFamily(familyId)) return <Navigate to="/reading" replace />;
-  return <ReadingDeck key={familyId} familyId={familyId} />;
+  const { familyId: deckId } = useParams();
+  if (!deckId) return <FamilyChooser />;
+  if (!getReadingDeck(deckId)) return <Navigate to="/reading" replace />;
+  return <ReadingDeck key={deckId} deckId={deckId} />;
 }

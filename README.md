@@ -11,7 +11,7 @@ This site has four main activities:
 - `Handwriting math`: solve vertical addition and subtraction problems by writing digits in answer boxes.
 - `Handwriting spelling`: hear a word, write it one letter at a time, and optionally hear it used in a sentence.
 - `A-maze-ing sentences`: trace through a word grid to build the hidden sentence.
-- `Sound It Out`: practice decoding word families, then reveal a picture and hear the whole word.
+- `Sound It Out`: practice decoding word families, then reveal a picture and hear the whole word. A separate Very Advanced deck holds the comically difficult words.
 
 There is also a `Configurations` page for changing math setup and spelling voice settings.
 
@@ -44,6 +44,7 @@ Start on the home page and tap one of the four activity cards.
 - `/#/spelling` opens handwriting spelling.
 - `/#/sentences` opens A-maze-ing sentences.
 - `/#/reading` opens the Sound It Out word-family chooser.
+- `/#/reading/very-advanced` opens the Very Advanced challenge deck directly.
 - `/#/configurations` opens the configuration screen.
 
 The `Configurations` page is the place to adjust the math round setup and the spelling voice without changing code.
@@ -97,6 +98,13 @@ The sentences app reads that JSON file directly.
 A puzzle may also carry a `grade`; leaving it out means grade 1. Append higher-grade puzzles to
 the END of the array. Progress is saved as an index into the filtered list, so inserting one in
 the middle would shift every later index and scramble which puzzles are already complete.
+
+### Add reading words
+
+Ordinary decoding families and the separate challenge deck live in
+[src/apps/reading/readingWords.ts](src/apps/reading/readingWords.ts). Challenge-deck artwork lives
+in [public/reading/advanced/](public/reading/advanced/) so it stays separate from the licensed
+ARASAAC pictograms.
 
 ## Local Development
 
