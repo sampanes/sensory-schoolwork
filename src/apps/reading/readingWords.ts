@@ -89,6 +89,8 @@ export const ADVANCED_READING_DECK: ReadingDeckDefinition = {
       speechRate: 0.68,
     },
     { word: "axolotl", image: advancedImage("axolotl"), speechRate: 0.72 },
+    { word: "accretion", image: advancedImage("accretion"), speechRate: 0.72 },
+    { word: "ubiquitous", image: advancedImage("ubiquitous"), speechRate: 0.72 },
   ],
 };
 
