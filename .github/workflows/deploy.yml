@@ -31,9 +31,8 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          # Sets the Vite base path to /repo-name/ automatically.
-          # With vite-plugin-singlefile all assets are inlined, so this
-          # only matters for the router's base URL.
+          # Sets the Vite base path to /repo-name/ so the split JS/CSS
+          # chunks, models and pictures resolve under the Pages subpath.
           VITE_BASE_URL: /${{ github.event.repository.name }}/
 
       - uses: actions/upload-pages-artifact@v3

@@ -1,8 +1,8 @@
 import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import ConfigurationsPage from "./pages/ConfigurationsPage";
 import HomePage from "./pages/HomePage";
 
+const ConfigurationsPage = lazy(() => import("./pages/ConfigurationsPage"));
 const MathApp = lazy(() => import("./apps/math/App"));
 const SpellingApp = lazy(() => import("./apps/spelling/App"));
 const SentencesApp = lazy(() => import("./apps/sentences/App"));
