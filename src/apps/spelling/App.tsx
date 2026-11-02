@@ -25,7 +25,6 @@ type FeedbackState = "idle" | "success" | "wrong" | "sloppy" | "word";
 type PlaylistWord = {
   word: string;
   sentence: string;
-  originalIndex: number;
 };
 
 const CONFIDENCE_THRESHOLD = 0.35;
@@ -73,13 +72,12 @@ function resolveActiveList(grade: Grade): { words: SpellingWord[]; label: string
 
 function buildPlaylist(grade: Grade): PlaylistWord[] {
   const baseWords = resolveActiveList(grade).words;
-  const playlist: PlaylistWord[] = baseWords.map((entry, originalIndex) => ({
+  const playlist: PlaylistWord[] = baseWords.map((entry) => ({
     word: entry.word,
     sentence:
       entry.sentence && entry.sentence.trim().length > 0
         ? entry.sentence
         : generateTemplateSentence(entry.word),
-    originalIndex,
   }));
 
   for (let i = playlist.length - 1; i > 0; i--) {
@@ -136,12 +134,6 @@ export default function App() {
   }, [activeWords, isFinished, letterIndex, totalLetters, wordIndex]);
 
   const progressValue = totalLetters > 0 ? Math.round((solvedLetters / totalLetters) * 100) : 0;
-
-  const completedOriginalIndices = useMemo(
-    () => new Set(activeWords.slice(0, wordIndex).map((entry) => entry.originalIndex)),
-    [activeWords, wordIndex]
-  );
-  const currentOriginalIndex = isFinished ? -1 : currentWordEntry.originalIndex;
 
   const clearCanvas = useCallback(() => {
     canvasHandleRef.current?.clear();
@@ -535,12 +527,18 @@ export default function App() {
                 <span>{Math.max(letterIndex, 0)}/{currentWord.length}</span>
               </div>
               <div className="mt-2 flex flex-wrap gap-1.5" aria-label="Pack progress">
-                {activeWords.map((_, originalIdx) => {
-                  const completed = isFinished || completedOriginalIndices.has(originalIdx);
-                  const isCurrent = originalIdx === currentOriginalIndex;
+                {/*
+                  One dot per word in this round, in the order she meets them.
+                  Positions are playlist indices, not positions in the pack: a
+                  round is a slice of a shuffled pool, so pack positions can
+                  run past the number of dots and would light the wrong ones.
+                */}
+                {activeWords.map((_, playlistIdx) => {
+                  const completed = isFinished || playlistIdx < wordIndex;
+                  const isCurrent = !isFinished && playlistIdx === wordIndex;
                   return (
                     <span
-                      key={originalIdx}
+                      key={playlistIdx}
                       className={cn(
                         "h-2 w-2 rounded-full transition-colors",
                         completed
