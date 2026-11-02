@@ -1,6 +1,6 @@
 # Advanced reading illustrations
 
-These seven PNGs belong to the separate **Very advanced** reading deck. They are
+These seven pictures belong to the separate **Very advanced** reading deck. They are
 bundled with the app so the cards still work without a network connection.
 
 The first five images were created for this project on 2026-09-20
@@ -25,10 +25,15 @@ Every prompt requested a centered, original educational pictogram with bold
 outlines, simple saturated color, a genuinely transparent background, and no
 text, labels, border, plate, or watermark. After generation, each image was
 cropped to its alpha bounds, resized to fit within 800x800, and PNG-optimized.
-`ubiquitous.png` was also reduced to a 256-color palette, because its hundreds of
+`ubiquitous` was also reduced to a 256-color palette, because its hundreds of
 pinecone scales made the full-color file twice the size of the others.
 
-`parangaricutirimicuaro.png` deliberately uses an ASCII filename. The displayed
+On 2026-11-02 the PNGs were converted to WebP at quality 85 (2.9 MB to about
+0.7 MB for the deck), so a reveal on a tablet does not wait on a 600 KB file.
+`ubiquitous` is lossless WebP: lossy encoding made its palette image larger.
+The original PNGs are in git history before that date.
+
+`parangaricutirimicuaro.webp` deliberately uses an ASCII filename. The displayed
 word retains its Spanish stress mark: `parangaricutirimícuaro`.
 
 See `manifest.json` for dimensions and the exact card-to-file mapping.

@@ -2,54 +2,54 @@
   "source": "OpenAI built-in image generation",
   "generatedAt": "2026-09-20",
   "thirdPartyAssets": false,
-  "processing": "Alpha-cropped, resized to fit within 800x800, and PNG-optimized",
+  "processing": "Alpha-cropped, resized to fit within 800x800, then saved as WebP (quality 85; lossless for the 256-color ubiquitous)",
   "count": 7,
   "images": [
     {
       "word": "osteichthyes",
-      "filename": "osteichthyes.png",
+      "filename": "osteichthyes.webp",
       "width": 800,
       "height": 783,
       "concept": "Bony fish with a visible skeletal cutaway"
     },
     {
       "word": "nucleotide",
-      "filename": "nucleotide.png",
+      "filename": "nucleotide.webp",
       "width": 800,
       "height": 730,
       "concept": "Connected phosphate, pentose sugar, and nitrogenous base"
     },
     {
       "word": "planetesimal",
-      "filename": "planetesimal.png",
+      "filename": "planetesimal.webp",
       "width": 797,
       "height": 800,
       "concept": "Rock and ice accreting into a planet-building body"
     },
     {
       "word": "parangaricutirimícuaro",
-      "filename": "parangaricutirimicuaro.png",
+      "filename": "parangaricutirimicuaro.webp",
       "width": 800,
       "height": 671,
       "concept": "Tongue-twister association with Parícutin and San Juan Parangaricutiro's lava-surrounded church"
     },
     {
       "word": "axolotl",
-      "filename": "axolotl.png",
+      "filename": "axolotl.webp",
       "width": 800,
       "height": 710,
       "concept": "Pink axolotl with six external gill stalks, little legs, and a finned tail"
     },
     {
       "word": "accretion",
-      "filename": "accretion.png",
+      "filename": "accretion.webp",
       "width": 800,
       "height": 765,
       "concept": "Snowball growing as it rolls downhill and picks up snow"
     },
     {
       "word": "ubiquitous",
-      "filename": "ubiquitous.png",
+      "filename": "ubiquitous.webp",
       "width": 800,
       "height": 800,
       "concept": "Backyard overrun with pinecones on every surface"

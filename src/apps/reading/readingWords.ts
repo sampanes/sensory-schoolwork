@@ -72,7 +72,7 @@ export const READING_FAMILIES: WordFamily[] = [
   { id: "ake", label: "_AKE", wordLength: 4, words: arasaacWords("cake", "rake") },
 ];
 
-const advancedImage = (filename: string) => withBaseUrl(`reading/advanced/${filename}.png`);
+const advancedImage = (filename: string) => withBaseUrl(`reading/advanced/${filename}.webp`);
 
 export const ADVANCED_READING_DECK: ReadingDeckDefinition = {
   id: "very-advanced",
