@@ -181,12 +181,29 @@ function ReadingDeck({ deckId }: { deckId: string }) {
     window.speechSynthesis?.cancel();
   }, [deck.words.length]);
 
+  /*
+   * Speech is decided from the rendered value, not inside the state updater:
+   * StrictMode runs updaters twice, and a side effect in one speaks twice.
+   */
   const toggle = useCallback(() => {
-    setRevealed((value) => {
-      if (!value) speakWord(current);
-      return !value;
-    });
-  }, [current]);
+    if (!revealed) speakWord(current);
+    setRevealed(!revealed);
+  }, [current, revealed]);
+
+  /*
+   * Fetch this word's picture and its neighbors' while the child is still
+   * sounding the word out, so the reveal shows the picture at once instead of
+   * a word that jumps when a late image lands. The advanced pictures are
+   * several hundred KB each, which is a visible wait on a tablet.
+   */
+  useEffect(() => {
+    const count = deck.words.length;
+    const nearby = [index, (index + 1) % count, (index - 1 + count) % count];
+    for (const i of nearby) {
+      const src = deck.words[i]?.image;
+      if (src) new Image().src = src;
+    }
+  }, [deck.words, index]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
