@@ -3,7 +3,7 @@
   "generatedAt": "2026-09-20",
   "thirdPartyAssets": false,
   "processing": "Alpha-cropped, resized to fit within 800x800, then saved as WebP (quality 85; lossless for the 256-color ubiquitous)",
-  "count": 7,
+  "count": 8,
   "images": [
     {
       "word": "osteichthyes",
@@ -53,6 +53,13 @@
       "width": 800,
       "height": 800,
       "concept": "Backyard overrun with pinecones on every surface"
+    },
+    {
+      "word": "phytoplankton",
+      "filename": "phytoplankton.webp",
+      "width": 800,
+      "height": 790,
+      "concept": "Six smiling green plankton cells: diatoms, a dinoflagellate, a cell chain, and a colony"
     }
   ]
 }

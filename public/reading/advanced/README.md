@@ -1,6 +1,6 @@
 # Advanced reading illustrations
 
-These seven pictures belong to the separate **Very advanced** reading deck. They are
+These eight pictures belong to the separate **Very advanced** reading deck. They are
 bundled with the app so the cards still work without a network connection.
 
 The first five images were created for this project on 2026-09-20
@@ -20,6 +20,7 @@ that directory's attribution or license statement.
 | `axolotl` | A friendly pink axolotl with six external gill stalks, little legs, and a finned tail. |
 | `accretion` | A snowball growing as it rolls downhill, gathering snow onto itself. |
 | `ubiquitous` | A backyard comically overrun with pinecones on every surface. |
+| `phytoplankton` | A cluster of smiling green plankton cells: diatoms, a dinoflagellate, a cell chain, and a colony. |
 
 Every prompt requested a centered, original educational pictogram with bold
 outlines, simple saturated color, a genuinely transparent background, and no
@@ -32,6 +33,10 @@ On 2026-11-02 the PNGs were converted to WebP at quality 85 (2.9 MB to about
 0.7 MB for the deck), so a reveal on a tablet does not wait on a 600 KB file.
 `ubiquitous` is lossless WebP: lossy encoding made its palette image larger.
 The original PNGs are in git history before that date.
+
+`phytoplankton` was added on 2026-11-07 (PR #5) as a 1254x1254 WebP. It was
+then cropped to its alpha bounds and resized to 800x790 at quality 85 to match
+the rest of the deck (312 KB to 184 KB).
 
 `parangaricutirimicuaro.webp` deliberately uses an ASCII filename. The displayed
 word retains its Spanish stress mark: `parangaricutirimícuaro`.
