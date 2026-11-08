@@ -91,8 +91,7 @@ export const ADVANCED_READING_DECK: ReadingDeckDefinition = {
     { word: "axolotl", image: advancedImage("axolotl"), speechRate: 0.72 },
     { word: "accretion", image: advancedImage("accretion"), speechRate: 0.72 },
     { word: "ubiquitous", image: advancedImage("ubiquitous"), speechRate: 0.72 },
-    // No picture yet; the reveal still reads the word aloud.
-    { word: "phytoplankton", image: null, speechRate: 0.72 },
+    { word: "phytoplankton", image: advancedImage("phytoplankton"), speechRate: 0.72 },
   ],
 };
 
