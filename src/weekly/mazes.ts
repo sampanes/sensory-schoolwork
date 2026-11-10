@@ -34,6 +34,41 @@ function shuffled<T>(items: readonly T[], random: () => number): T[] {
   return copy;
 }
 
+/**
+ * True when two words differ by at most one letter added, removed, or changed:
+ * woman/women, hear/heard, pair/pear, dog/dogs. Such a word next to the path
+ * can make a second sentence that is just as right ("The woman found a
+ * dollar"), and a maze with two right answers marks a correct child wrong.
+ */
+function nearlySame(a: string, b: string): boolean {
+  if (Math.abs(a.length - b.length) > 1) {
+    return false;
+  }
+  let i = 0;
+  let j = 0;
+  let edits = 0;
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) {
+      i += 1;
+      j += 1;
+      continue;
+    }
+    edits += 1;
+    if (edits > 1) {
+      return false;
+    }
+    if (a.length > b.length) {
+      i += 1;
+    } else if (b.length > a.length) {
+      j += 1;
+    } else {
+      i += 1;
+      j += 1;
+    }
+  }
+  return edits + (a.length - i) + (b.length - j) <= 1;
+}
+
 /** The words a child taps, in order. Trailing sentence punctuation is dropped, as in the workbook mazes. */
 export function mazeWords(sentence: string): string[] {
   return sentence
@@ -92,8 +127,9 @@ function findPath(length: number, random: () => number): Array<[number, number]>
  *
  * Distractors come from the same week -- its spelling words, then the other
  * mazes' words -- so the grid is practice with the words she is learning.
- * None of them matches a word in this sentence, ignoring case, so a correct
- * sentence can only be traced one way.
+ * None of them matches a word in this sentence, ignoring case, or is one
+ * letter away from one (see nearlySame), so a correct sentence can only be
+ * traced one way.
  */
 export function buildMaze(week: Week, mazeIndex: number): Puzzle | null {
   const maze = week.mazes[mazeIndex];
@@ -109,14 +145,15 @@ export function buildMaze(week: Week, mazeIndex: number): Puzzle | null {
     return null;
   }
 
-  const taken = new Set(words.map((word) => word.toLowerCase()));
+  const sentenceKeys = words.map((word) => word.toLowerCase());
+  const taken = new Set(sentenceKeys);
   const candidates: string[] = [];
   const addCandidate = (raw: string) => {
     const word = raw.trim().replace(/[.!?,]+$/, "");
     const key = word.toLowerCase();
     // "I" stays capitalised; any other sentence-initial capital is dropped.
     const shown = key === "i" ? "I" : key;
-    if (word && !taken.has(key)) {
+    if (word && !taken.has(key) && !sentenceKeys.some((own) => own.length > 2 && nearlySame(own, key))) {
       taken.add(key);
       candidates.push(shown);
     }
