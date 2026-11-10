@@ -10,5 +10,11 @@ export type SpellingBank = {
    * the point. See utils/gradePreferences.ts for the cumulative rule.
    */
   grade: Grade;
+  /**
+   * Moved out of the way, not removed: an archived bank still works if
+   * ticked, and can still be copied into a typed list, but it sits in the
+   * collapsed Archive on the Configurations page instead of out front.
+   */
+  archived?: boolean;
   words: readonly SpellingWord[];
 };

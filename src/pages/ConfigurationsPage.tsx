@@ -31,7 +31,14 @@ import {
   setStoredSpellingSource,
   type SpellingSource,
 } from "../utils/spellingPreferences";
-import { describeSelection, getBanksForGrade, resolveSelectedWords } from "../apps/spelling/banks";
+import {
+  CURRENT_WEEK_BANK,
+  THIS_WEEK_ID,
+  WEEKLY_BANKS,
+  describeSelection,
+  getBanksForGrade,
+  resolveSelectedWords,
+} from "../apps/spelling/banks";
 import { getStoredGrade, gradeLabel } from "../utils/gradePreferences";
 import { cn } from "../utils/cn";
 
@@ -475,6 +482,18 @@ export default function ConfigurationsPage() {
    */
   const [grade] = useState(getStoredGrade);
   const banksForGrade = useMemo(() => getBanksForGrade(grade), [grade]);
+  /*
+   * Out front: "This week" and whatever is not archived (sight words). Older
+   * weeks and the archived packs fold away so the everyday choice is one tap.
+   */
+  const frontBanks = useMemo(
+    () => banksForGrade.filter((bank) => !bank.archived && !WEEKLY_BANKS.includes(bank)),
+    [banksForGrade]
+  );
+  const pastWeekBanks = useMemo(() => WEEKLY_BANKS.slice(1), []);
+  const archivedBanks = useMemo(() => banksForGrade.filter((bank) => bank.archived), [banksForGrade]);
+  const [pastWeeksExpanded, setPastWeeksExpanded] = useState(false);
+  const [archiveExpanded, setArchiveExpanded] = useState(false);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoiceURI, setSelectedVoiceURI] = useState("");
   const [speechSupported, setSpeechSupported] = useState(false);
@@ -590,6 +609,84 @@ export default function ConfigurationsPage() {
       : [...spellingPackIds, packId];
     setSpellingPackIds(next);
     setStoredSpellingPackIds(next);
+  };
+
+  const renderPackToggle = (packId: string, label: string, wordCount: number, note?: string) => {
+    const checked = spellingPackIds.includes(packId);
+    return (
+      <button
+        key={packId}
+        type="button"
+        onClick={() => toggleSpellingPack(packId)}
+        aria-pressed={checked}
+        aria-label={label + (note ? ", " + note : "") + ", " + wordCount + " words"}
+        className={cn(
+          "flex items-center justify-between gap-2 rounded-2xl border bg-white px-3 py-3 text-left transition",
+          checked ? "border-zinc-950" : "border-zinc-300 hover:bg-zinc-50"
+        )}
+      >
+        <span className="flex min-w-0 items-center gap-2">
+          <span
+            className={cn(
+              "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition",
+              checked ? "border-zinc-950 bg-zinc-950 text-white" : "border-zinc-300"
+            )}
+            aria-hidden
+          >
+            {/* Rendered only when ticked. Hiding it with a transparent
+                colour instead leaves it visible wherever something
+                repaints colours -- a dark-mode extension, forced-colours
+                mode -- and then every pack looks selected. */}
+            {checked ? (
+              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="3">
+                <path d="M5 13l4 4L19 7" />
+              </svg>
+            ) : null}
+          </span>
+          <span className="truncate text-sm font-semibold text-zinc-900">{label}</span>
+          {note ? <span className="truncate text-xs text-zinc-500">{note}</span> : null}
+        </span>
+        <span className="shrink-0 text-xs font-semibold text-zinc-500" aria-hidden>
+          {wordCount} words
+        </span>
+      </button>
+    );
+  };
+
+  /*
+   * A folded group of packs. The header says how many inside are ticked, so a
+   * selection hidden in a closed group is never a surprise.
+   */
+  const renderPackShelf = (
+    title: string,
+    banks: readonly { id: string; label: string; words: readonly unknown[] }[],
+    expanded: boolean,
+    setExpanded: (next: boolean) => void
+  ) => {
+    const tickedCount = banks.filter((bank) => spellingPackIds.includes(bank.id)).length;
+    return (
+      <div className="mt-3">
+        <button
+          type="button"
+          onClick={() => setExpanded(!expanded)}
+          aria-expanded={expanded}
+          className="flex w-full items-center justify-between rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 px-3 py-2.5 text-left text-sm font-semibold text-zinc-700 transition hover:bg-zinc-100"
+        >
+          <span>
+            {title} ({banks.length})
+            {tickedCount > 0 ? <span className="ml-2 text-xs font-semibold text-zinc-500">{tickedCount} ticked</span> : null}
+          </span>
+          <span className="text-xs text-zinc-500" aria-hidden>
+            {expanded ? "Hide" : "Show"}
+          </span>
+        </button>
+        {expanded ? (
+          <div className="mt-2 grid gap-2">
+            {banks.map((bank) => renderPackToggle(bank.id, bank.label, bank.words.length))}
+          </div>
+        ) : null}
+      </div>
+    );
   };
 
   const commitSpellingCustomListDraft = () => {
@@ -1016,47 +1113,18 @@ export default function ConfigurationsPage() {
                 {spellingSource === "packs" ? (
                   <>
                     <div className="mt-4 grid gap-2">
-                      {banksForGrade.map((bank) => {
-                        const checked = spellingPackIds.includes(bank.id);
-                        return (
-                          <button
-                            key={bank.id}
-                            type="button"
-                            onClick={() => toggleSpellingPack(bank.id)}
-                            aria-pressed={checked}
-                            aria-label={bank.label + ", " + bank.words.length + " words"}
-                            className={cn(
-                              "flex items-center justify-between gap-2 rounded-2xl border bg-white px-3 py-3 text-left transition",
-                              checked ? "border-zinc-950" : "border-zinc-300 hover:bg-zinc-50"
-                            )}
-                          >
-                            <span className="flex min-w-0 items-center gap-2">
-                              <span
-                                className={cn(
-                                  "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition",
-                                  checked ? "border-zinc-950 bg-zinc-950 text-white" : "border-zinc-300"
-                                )}
-                                aria-hidden
-                              >
-                                {/* Rendered only when ticked. Hiding it with a transparent
-                                    colour instead leaves it visible wherever something
-                                    repaints colours -- a dark-mode extension, forced-colours
-                                    mode -- and then every pack looks selected. */}
-                                {checked ? (
-                                  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="3">
-                                    <path d="M5 13l4 4L19 7" />
-                                  </svg>
-                                ) : null}
-                              </span>
-                              <span className="truncate text-sm font-semibold text-zinc-900">{bank.label}</span>
-                            </span>
-                            <span className="shrink-0 text-xs font-semibold text-zinc-500" aria-hidden>
-                              {bank.words.length} words
-                            </span>
-                          </button>
-                        );
-                      })}
+                      {CURRENT_WEEK_BANK
+                        ? renderPackToggle(THIS_WEEK_ID, "This week", CURRENT_WEEK_BANK.words.length, CURRENT_WEEK_BANK.label)
+                        : null}
+                      {frontBanks.map((bank) => renderPackToggle(bank.id, bank.label, bank.words.length))}
                     </div>
+
+                    {pastWeekBanks.length > 0
+                      ? renderPackShelf("Past weeks", pastWeekBanks, pastWeeksExpanded, setPastWeeksExpanded)
+                      : null}
+                    {archivedBanks.length > 0
+                      ? renderPackShelf("Archive", archivedBanks, archiveExpanded, setArchiveExpanded)
+                      : null}
 
                     <p className="mt-3 text-xs text-zinc-500">
                       {spellingPackIds.length === 0

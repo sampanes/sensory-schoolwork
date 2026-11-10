@@ -51,6 +51,45 @@ The `Configurations` page is the place to adjust the math round setup and the sp
 
 ## How To Add Words, Problems, Or Sentences
 
+### Add this week's words (the Monday list)
+
+Each week's words live in one file in [src/weekly/](src/weekly/), named for that Monday
+(`week-2026-11-16.ts`), and are registered in `src/weekly/index.ts`. One file feeds two
+activities:
+
+```ts
+export const WEEK_2026_11_16: Week = {
+  id: "week-2026-11-16",
+  weekOf: "2026-11-16",
+  words: [
+    { word: "jump", sentence: "Frogs can jump over the log." },
+    // ... about 30
+  ],
+  mazes: [
+    { sentence: "The frog can jump", picture: "A frog leaping over a puddle." },
+    // ... a handful
+  ],
+};
+```
+
+- `words` becomes a spelling list. The newest week is "This week" on the `Configurations` page,
+  and it is the default at every grade, so a new Monday list takes over on its own. Older weeks
+  fold into "Past weeks".
+- `mazes` become that week's sentence mazes. Only the sentence is written: the 4x4 grid, a path
+  from the top-left corner, and the distractor words (drawn from the same week) are built when
+  the page loads, by [src/weekly/mazes.ts](src/weekly/mazes.ts). Keep each sentence to 4-9
+  words with no commas. The maze screen opens on "This week" and keeps a separate progress for
+  each week, apart from the workbook.
+
+Never rename a week's `id` once it is live: saved selections and maze progress are keyed on it.
+
+### Archived banks
+
+The older built-in banks (starter words, Packs 1-6, contractions) carry `archived: true`. They
+still work: they sit in a collapsed "Archive" on the `Configurations` page, can be ticked, and can
+be copied into a typed list for reuse. Sight words stay out front. Remove the flag to bring a
+bank back.
+
 ### Add spelling words
 
 Edit [src/apps/spelling/spellingWords.ts](src/apps/spelling/spellingWords.ts).
@@ -93,7 +132,8 @@ Each puzzle contains:
 - a `solution_words` list
 - a `solution_cells` path
 
-The sentences app reads that JSON file directly.
+The sentences app reads that JSON file directly. That file is the workbook set; weekly mazes come
+from `src/weekly/` instead (see the Monday list above) and never touch it.
 
 A puzzle may also carry a `grade`; leaving it out means grade 1. Append higher-grade puzzles to
 the END of the array. Progress is saved as an index into the filtered list, so inserting one in

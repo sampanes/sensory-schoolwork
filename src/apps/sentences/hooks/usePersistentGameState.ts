@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const STORAGE_KEY = 'wordMazeGameState';
+/** The workbook set's key. Weekly sets pass their own, so each week starts at puzzle 1. */
+export const WORKBOOK_STORAGE_KEY = 'wordMazeGameState';
 const CONFIG_KEY = 'wordMazeConfig';
 
 interface GameState {
@@ -13,7 +14,7 @@ interface GameConfig {
   startingPuzzle: number;
 }
 
-export function usePersistentGameState(totalPuzzles: number) {
+export function usePersistentGameState(totalPuzzles: number, storageKey: string = WORKBOOK_STORAGE_KEY) {
   const [currentPuzzleIndex, setCurrentPuzzleIndex] = useState(0);
   const [completedPuzzles, setCompletedPuzzles] = useState<Set<number>>(new Set());
   const [isLoaded, setIsLoaded] = useState(false);
@@ -21,16 +22,19 @@ export function usePersistentGameState(totalPuzzles: number) {
   // Load state from localStorage on mount
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved = localStorage.getItem(storageKey);
       if (saved) {
         const state: Omit<GameState, 'timestamp'> & { completedPuzzles: number[] } = JSON.parse(saved);
-        setCurrentPuzzleIndex(state.currentPuzzleIndex);
+        // A set can shrink (a maze removed from a week); landing past the end would leave the screen on Loading.
+        const index = Number.isInteger(state.currentPuzzleIndex) ? state.currentPuzzleIndex : 0;
+        setCurrentPuzzleIndex(Math.min(Math.max(index, 0), Math.max(totalPuzzles - 1, 0)));
         setCompletedPuzzles(new Set(state.completedPuzzles || []));
       }
     } catch (e) {
       console.error('Failed to load game state:', e);
     }
     setIsLoaded(true);
+    // Read once per mount; a different set is a different mount (see the key on MazePlayer).
   }, []);
 
   // Save state to localStorage whenever it changes
@@ -42,14 +46,14 @@ export function usePersistentGameState(totalPuzzles: number) {
         completedPuzzles,
         timestamp: Date.now(),
       };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      localStorage.setItem(storageKey, JSON.stringify({
         ...state,
         completedPuzzles: Array.from(state.completedPuzzles),
       }));
     } catch (e) {
       console.error('Failed to save game state:', e);
     }
-  }, [currentPuzzleIndex, completedPuzzles, isLoaded]);
+  }, [currentPuzzleIndex, completedPuzzles, isLoaded, storageKey]);
 
   const markPuzzleComplete = useCallback((index: number) => {
     setCompletedPuzzles((prev) => new Set([...prev, index]));
@@ -58,8 +62,8 @@ export function usePersistentGameState(totalPuzzles: number) {
   const resetAll = useCallback(() => {
     setCurrentPuzzleIndex(0);
     setCompletedPuzzles(new Set());
-    localStorage.removeItem(STORAGE_KEY);
-  }, []);
+    localStorage.removeItem(storageKey);
+  }, [storageKey]);
 
   const jumpToPuzzle = useCallback((index: number) => {
     if (index >= 0 && index < totalPuzzles) {

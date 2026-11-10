@@ -11,9 +11,31 @@ import type { Grade } from "../../../utils/gradePreferences";
 import { isAvailableAtGrade } from "../../../utils/gradePreferences";
 import type { SpellingWord } from "../spellingWords";
 import type { SpellingBank } from "./types";
+import { CURRENT_WEEK, WEEKS, weekLabel } from "../../../weekly";
 
 export type { SpellingBank };
 export { SIGHT_WORDS, STARTER };
+
+/*
+ * The Monday-night lists, newest first. Each week in src/weekly/ becomes a
+ * bank here. They are grade 0 so they show at every level: the week's words
+ * are chosen for the child in front of you, not for a grade.
+ */
+export const WEEKLY_BANKS: readonly SpellingBank[] = WEEKS.map((week) => ({
+  id: week.id,
+  label: weekLabel(week),
+  grade: 0,
+  words: week.words,
+}));
+
+/**
+ * A selection that follows the calendar: ticking "This week" means whatever
+ * the newest week is, so the Monday list takes over without anyone touching
+ * the Configurations page. Ticking a dated week pins that week instead.
+ */
+export const THIS_WEEK_ID = "this-week";
+
+export const CURRENT_WEEK_BANK: SpellingBank | null = WEEKLY_BANKS[0] ?? null;
 
 export const BUILTIN_BANKS: readonly SpellingBank[] = [
   SIGHT_WORDS,
@@ -27,9 +49,13 @@ export const BUILTIN_BANKS: readonly SpellingBank[] = [
   PACK_6,
 ] as const;
 
-/** The banks a child working at `grade` should see, in their listed order. */
+/**
+ * The banks a child working at `grade` can use, weekly lists first, then the
+ * built-in ones in their listed order. Archived banks are included: they are
+ * still selectable, just shown apart.
+ */
 export function getBanksForGrade(grade: Grade): readonly SpellingBank[] {
-  return BUILTIN_BANKS.filter((bank) => isAvailableAtGrade(bank.grade, grade));
+  return [...WEEKLY_BANKS, ...BUILTIN_BANKS].filter((bank) => isAvailableAtGrade(bank.grade, grade));
 }
 
 /**
@@ -50,8 +76,13 @@ const DEFAULT_PACK_IDS_BY_GRADE: Record<Grade, readonly string[]> = {
   2: [PACK_6.id],
 };
 
+/**
+ * Once there is a weekly list, it is the default at every grade: the Monday
+ * words are the teaching choice now. The per-grade table only covers the time
+ * before the first week is added.
+ */
 export function getDefaultPackIds(grade: Grade): readonly string[] {
-  return DEFAULT_PACK_IDS_BY_GRADE[grade];
+  return CURRENT_WEEK ? [THIS_WEEK_ID] : DEFAULT_PACK_IDS_BY_GRADE[grade];
 }
 
 /**
@@ -65,16 +96,16 @@ export function getDefaultPackIds(grade: Grade): readonly string[] {
  * words even after a bank is renamed or removed.
  */
 export function resolveSelectedBanks(packIds: readonly string[], grade: Grade): readonly SpellingBank[] {
-  const available = getBanksForGrade(grade);
-  const wanted = new Set(packIds);
-  const selected = available.filter((bank) => wanted.has(bank.id));
+  const pick = (ids: readonly string[]) => {
+    const wanted = new Set(ids);
+    if (wanted.has(THIS_WEEK_ID) && CURRENT_WEEK_BANK) {
+      wanted.add(CURRENT_WEEK_BANK.id);
+    }
+    return getBanksForGrade(grade).filter((bank) => wanted.has(bank.id));
+  };
 
-  if (selected.length > 0) {
-    return selected;
-  }
-
-  const fallback = new Set(getDefaultPackIds(grade));
-  return available.filter((bank) => fallback.has(bank.id));
+  const selected = pick(packIds);
+  return selected.length > 0 ? selected : pick(getDefaultPackIds(grade));
 }
 
 /**

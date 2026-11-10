@@ -4,7 +4,14 @@ import type { SpellingWord } from "../apps/spelling/spellingWords";
 export const SPELLING_CUSTOM_LIST_ENABLED_STORAGE_KEY = "spelling.customList.enabled";
 export const SPELLING_CUSTOM_LIST_TEXT_STORAGE_KEY = "spelling.customList.text";
 export const SPELLING_SOURCE_STORAGE_KEY = "spelling.source";
-export const SPELLING_PACK_IDS_STORAGE_KEY = "spelling.packIds";
+/*
+ * v2 since the weekly lists arrived. A selection saved before then names packs
+ * that are now archived, and keeping it would hold a phone on Pack 6 while the
+ * Monday words sat unticked. Starting fresh lets the "This week" default take
+ * over; the old key is deleted the first time it is seen.
+ */
+export const SPELLING_PACK_IDS_STORAGE_KEY = "spelling.packIds.v2";
+const LEGACY_SPELLING_PACK_IDS_STORAGE_KEY = "spelling.packIds";
 export const SPELLING_ROUND_LENGTH_STORAGE_KEY = "spelling.roundLength";
 
 /**
@@ -56,6 +63,8 @@ export function getStoredSpellingPackIds(): string[] {
   if (typeof window === "undefined") {
     return [];
   }
+
+  window.localStorage.removeItem(LEGACY_SPELLING_PACK_IDS_STORAGE_KEY);
 
   const raw = window.localStorage.getItem(SPELLING_PACK_IDS_STORAGE_KEY);
   if (!raw) {

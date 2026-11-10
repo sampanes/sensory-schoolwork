@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import confetti from 'canvas-confetti';
 import { useNavigate } from 'react-router-dom';
-import { PuzzleData } from './types/puzzle';
+import { Puzzle, PuzzleData } from './types/puzzle';
 import puzzleDataRaw from './data/puzzles.json';
 import { getStoredGrade, isAvailableAtGrade } from '../../utils/gradePreferences';
-import { usePersistentGameState } from './hooks/usePersistentGameState';
+import { WORKBOOK_STORAGE_KEY, usePersistentGameState } from './hooks/usePersistentGameState';
+import { CURRENT_WEEK, weekLabel } from '../../weekly';
+import { buildWeekMazes } from '../../weekly/mazes';
 
 const defaultPuzzleData = puzzleDataRaw as unknown as PuzzleData;
 
@@ -110,17 +112,16 @@ const Connectors: React.FC<ConnectorsProps> = ({ selectedIndices, gridRefs, cont
 /* ------------------------------------------------------------------ */
 /*  Main App                                                           */
 /* ------------------------------------------------------------------ */
-const SentencesApp: React.FC = () => {
+interface MazePlayerProps {
+  puzzles: Puzzle[];
+  storageKey: string;
+  /** Rendered under the title; the This week / Workbook switch, when there is a week. */
+  setSwitcher: React.ReactNode;
+}
+
+const MazePlayer: React.FC<MazePlayerProps> = ({ puzzles, storageKey, setSwitcher }) => {
   const navigate = useNavigate();
-  /*
-   * Read once per mount rather than watched: the grade switch lives on the
-   * home page, and coming back from there remounts this component.
-   */
-  const [grade] = useState(getStoredGrade);
-  const visiblePuzzles = useMemo(
-    () => defaultPuzzleData.puzzles.filter((puzzle) => isAvailableAtGrade(puzzle.grade ?? 1, grade)),
-    [grade],
-  );
+  const visiblePuzzles = puzzles;
   const {
     currentPuzzleIndex,
     setCurrentPuzzleIndex,
@@ -129,7 +130,7 @@ const SentencesApp: React.FC = () => {
     resetAll,
     jumpToPuzzle,
     isLoaded,
-  } = usePersistentGameState(visiblePuzzles.length);
+  } = usePersistentGameState(visiblePuzzles.length, storageKey);
 
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
   const [isWon, setIsWon] = useState(false);
@@ -242,6 +243,7 @@ const SentencesApp: React.FC = () => {
   if (isLoaded && visiblePuzzles.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 flex flex-col items-center justify-center gap-6 p-6 text-center text-white">
+        {setSwitcher}
         <p className="text-lg text-slate-300">No sentence mazes for this grade yet.</p>
         <button
           onClick={() => navigate('/')}
@@ -265,6 +267,7 @@ const SentencesApp: React.FC = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 flex flex-col items-center justify-center p-6 text-white font-sans">
         <div className="max-w-md w-full text-center space-y-8">
+          {setSwitcher ? <div className="flex justify-center">{setSwitcher}</div> : null}
           <div className="text-8xl mb-2">🏆</div>
           <h1 className="text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-amber-300 to-emerald-400">
             All Done!
@@ -381,6 +384,8 @@ const SentencesApp: React.FC = () => {
             {showHint ? 'Hide' : '💡 Hint'}
           </button>
         </div>
+
+        {setSwitcher}
 
         {/* Progress bar */}
         <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
@@ -533,6 +538,83 @@ const SentencesApp: React.FC = () => {
         </div>
       </main>
     </div>
+  );
+};
+
+type MazeSetId = 'week' | 'workbook';
+const MAZE_SET_STORAGE_KEY = 'wordMaze.set';
+
+/*
+ * Which set was last open, remembered per week: choosing the workbook holds
+ * until the next Monday's mazes arrive, then the new week opens first again.
+ */
+function getStoredMazeSet(weekId: string): MazeSetId {
+  try {
+    const saved = JSON.parse(localStorage.getItem(MAZE_SET_STORAGE_KEY) ?? 'null') as { set?: string; weekId?: string } | null;
+    if (saved?.weekId === weekId && (saved.set === 'week' || saved.set === 'workbook')) {
+      return saved.set;
+    }
+  } catch {
+    // Unreadable: fall through to this week.
+  }
+  return 'week';
+}
+
+function setStoredMazeSet(weekId: string, set: MazeSetId) {
+  try {
+    localStorage.setItem(MAZE_SET_STORAGE_KEY, JSON.stringify({ set, weekId }));
+  } catch {
+    // Storage blocked: the choice just is not remembered.
+  }
+}
+
+const SentencesApp: React.FC = () => {
+  /*
+   * Read once per mount rather than watched: the grade switch lives on the
+   * home page, and coming back from there remounts this component.
+   */
+  const [grade] = useState(getStoredGrade);
+  const workbookPuzzles = useMemo(
+    () => defaultPuzzleData.puzzles.filter((puzzle) => isAvailableAtGrade(puzzle.grade ?? 1, grade)),
+    [grade],
+  );
+  // Weekly mazes ignore the grade, like the weekly spelling list: they were written for this child.
+  const weekPuzzles = useMemo(() => (CURRENT_WEEK ? buildWeekMazes(CURRENT_WEEK) : []), []);
+  const week = weekPuzzles.length > 0 ? CURRENT_WEEK : null;
+
+  const [set, setSet] = useState<MazeSetId>(() => (week ? getStoredMazeSet(week.id) : 'workbook'));
+  const activeSet: MazeSetId = week ? set : 'workbook';
+
+  const chooseSet = (next: MazeSetId) => {
+    if (!week) return;
+    setSet(next);
+    setStoredMazeSet(week.id, next);
+  };
+
+  const switcher = week ? (
+    <div className="flex gap-1 rounded-xl border border-slate-800 bg-slate-900/60 p-1 text-xs font-bold" role="group" aria-label="Maze set">
+      {([
+        ['week', `This week (${weekLabel(week).replace('Week of ', '')})`],
+        ['workbook', 'Workbook'],
+      ] as Array<[MazeSetId, string]>).map(([id, label]) => (
+        <button
+          key={id}
+          onClick={() => chooseSet(id)}
+          aria-pressed={activeSet === id}
+          className={`px-3 py-1.5 rounded-lg transition-colors ${
+            activeSet === id ? 'bg-amber-400 text-slate-900' : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  ) : null;
+
+  return activeSet === 'week' && week ? (
+    <MazePlayer key={week.id} puzzles={weekPuzzles} storageKey={`${WORKBOOK_STORAGE_KEY}.${week.id}`} setSwitcher={switcher} />
+  ) : (
+    <MazePlayer key="workbook" puzzles={workbookPuzzles} storageKey={WORKBOOK_STORAGE_KEY} setSwitcher={switcher} />
   );
 };
 

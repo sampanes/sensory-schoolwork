@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "analyze:math-debug": "node math_test/analyze-debug-corpus.mjs",
-    "import:math-debug": "node math_test/import-debug-session.mjs"
+    "import:math-debug": "node math_test/import-debug-session.mjs",
+    "check:weeks": "esbuild scripts/check-weeks.ts --bundle --platform=node --log-level=warning --outfile=node_modules/.cache/check-weeks.cjs && node node_modules/.cache/check-weeks.cjs"
   },
   "dependencies": {
     "@tensorflow/tfjs": "^4.22.0",

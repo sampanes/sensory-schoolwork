@@ -11,5 +11,6 @@ export const STARTER: SpellingBank = {
   id: "starter",
   label: "Starter words",
   grade: 0,
+  archived: true,
   words: SPELLING_WORDS,
 };

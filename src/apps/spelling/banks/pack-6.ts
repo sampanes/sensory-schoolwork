@@ -13,6 +13,7 @@ export const PACK_6: SpellingBank = {
   id: "pack-6",
   label: "Pack 6",
   grade: 2,
+  archived: true,
   words: [
     { word: "farm", sentence: "We drove past a farm with black and white cows." },
     { word: "farmer", sentence: "The farmer waved at us from his green tractor." },

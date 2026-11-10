@@ -4,6 +4,7 @@ export const PACK_4: SpellingBank = {
   id: "pack-4",
   label: "Pack 4",
   grade: 1,
+  archived: true,
   words: [
     { word: "boat", sentence: "We rowed a small boat across the calm lake." },
     { word: "son", sentence: "Her son brought home a painting from school." },
