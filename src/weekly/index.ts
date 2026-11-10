@@ -1,4 +1,5 @@
 import type { Week } from "./types";
+import { WEEK_2026_11_09 } from "./week-2026-11-09";
 
 export type { Week, WeeklyMaze } from "./types";
 
@@ -9,7 +10,7 @@ export type { Week, WeeklyMaze } from "./types";
  * To add a week: copy the newest file, rename it to the new Monday's date,
  * and add it to this list.
  */
-const ALL_WEEKS: readonly Week[] = [];
+const ALL_WEEKS: readonly Week[] = [WEEK_2026_11_09];
 
 export const WEEKS: readonly Week[] = [...ALL_WEEKS].sort((a, b) => b.weekOf.localeCompare(a.weekOf));
 
