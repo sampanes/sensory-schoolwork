@@ -4,9 +4,12 @@
  *   npm run check:weeks
  *
  * Exits non-zero on a problem that would break or confuse a session (a maze
- * that cannot be built, a duplicate word, an id that does not match its date).
- * Warnings are things worth a second look that still work.
+ * that cannot be built, a duplicate word, an id that does not match its date,
+ * a week file that was never registered in index.ts). Warnings are things
+ * worth a second look that still work.
  */
+import { readdirSync } from "node:fs";
+import path from "node:path";
 import { WEEKS } from "../src/weekly";
 import { buildMaze, mazeWords } from "../src/weekly/mazes";
 
@@ -94,6 +97,18 @@ for (const week of WEEKS) {
   });
 
   console.log(`${where}: ${week.words.length} words, ${week.mazes.length} mazes`);
+}
+
+/*
+ * A week file that is not imported in index.ts builds fine and never shows
+ * up, which looks exactly like a deploy that did not happen.
+ */
+const registered = new Set(WEEKS.map((week) => week.id));
+for (const file of readdirSync(path.join(process.cwd(), "src", "weekly"))) {
+  const match = /^(week-.+)\.ts$/.exec(file);
+  if (match && !registered.has(match[1])) {
+    error(`src/weekly/${file}: no registered week has the id "${match[1]}" (add it to ALL_WEEKS in index.ts, or match its id to the file name)`);
+  }
 }
 
 console.log(`${WEEKS.length} week(s), ${errors} error(s), ${warnings} warning(s)`);
