@@ -159,6 +159,17 @@ Then open `http://localhost:5173`.
 
 There is a Python helper at `scripts/comfyui_bulk_images.py` for batch-generating puzzle hint images via a local ComfyUI server. It is a dev-tool, not part of the site build. See [scripts/README.md](scripts/README.md) for setup and usage.
 
+## Checks
+
+```bash
+npm run check
+```
+
+Runs the typecheck, the weekly-list check (`npm run check:weeks`) and the tests (`npm test`). The
+deploy runs the same command first and stops on a failure, so a broken push leaves the previous
+site up. Tests live in [tests/](tests/) as `*.test.ts` and use Node's built-in test runner; the
+maze tests build every registered week, so a new Monday list is tested the moment it is added.
+
 ## Build And Deploy
 
 ```bash
