@@ -3,10 +3,8 @@ import { Link } from "react-router-dom";
 import {
   canvasHasInk,
   type DigitModel,
-  getLoadedHandwritingModelInfo,
   loadHandwritingModel,
   recognizeCanvas,
-  type LoadedModelInfo,
   type RecognitionResult,
 } from "./handwritingModel";
 import { saveDebugEntry } from "./debugSaver";
@@ -146,7 +144,6 @@ export default function App() {
   const [debugEnabled, setDebugEnabled] = useState(false);
   const [debugCaptureAllEnabled, setDebugCaptureAllEnabled] = useState(false);
   const [debugSessionCount, setDebugSessionCount] = useState(0);
-  const [modelInfo, setModelInfo] = useState<LoadedModelInfo | null>(null);
   const [leftHasInk, setLeftHasInk] = useState(false);
   const [rightHasInk, setRightHasInk] = useState(false);
   const [debugSlotResults, setDebugSlotResults] = useState<Record<SlotName, DebugSlotResult>>({
@@ -310,7 +307,6 @@ export default function App() {
         }
 
         modelRef.current = model;
-        setModelInfo(getLoadedHandwritingModelInfo());
         setModelReady(true);
       })
       .catch((error: unknown) => {
