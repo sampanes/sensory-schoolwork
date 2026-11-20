@@ -44,6 +44,19 @@ test("no bank has an empty word, and only deliberate homographs repeat", () => {
   }
 });
 
+test("every spelling word is plain letters, and its sentence says it", () => {
+  for (const bank of [...WEEKLY_BANKS, ...BUILTIN_BANKS]) {
+    for (const entry of bank.words) {
+      assert.match(entry.word, /^[A-Za-z]+(?:'[A-Za-z]+)?$/, `${bank.id}: "${entry.word}" has characters a child cannot write`);
+      const sentence = (entry.sentence ?? "").trim();
+      if (sentence) {
+        assert.ok(sentence.toLowerCase().includes(entry.word.toLowerCase()), `${bank.id}: the sentence for "${entry.word}" never says it`);
+        assert.match(sentence, /[.!?]$/, `${bank.id}: the sentence for "${entry.word}" has no end punctuation`);
+      }
+    }
+  }
+});
+
 test("the newest week is this week, and the default at every grade", () => {
   assert.equal(CURRENT_WEEK, WEEKS[0]);
   for (let index = 1; index < WEEKS.length; index += 1) {
