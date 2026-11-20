@@ -34,12 +34,7 @@ function shuffled<T>(items: readonly T[], random: () => number): T[] {
   return copy;
 }
 
-/**
- * True when two words differ by at most one letter added, removed, or changed:
- * woman/women, hear/heard, pair/pear, dog/dogs. Such a word next to the path
- * can make a second sentence that is just as right ("The woman found a
- * dollar"), and a maze with two right answers marks a correct child wrong.
- */
+/** True when two words differ by at most one letter added, removed, or changed: woman/women, hear/heard, in/on. */
 function nearlySame(a: string, b: string): boolean {
   if (Math.abs(a.length - b.length) > 1) {
     return false;
@@ -67,6 +62,33 @@ function nearlySame(a: string, b: string): boolean {
     }
   }
   return edits + (a.length - i) + (b.length - j) <= 1;
+}
+
+/**
+ * True when `other` could stand in for the sentence word `own` and still read
+ * as right. Such a word next to the path makes a second sentence that is just
+ * as right ("The woman found a dollar", "The cat sat on the box"), and a maze
+ * with two right answers marks a correct child wrong. Caught:
+ *
+ * - one letter added, removed or changed: woman/women, hear/heard, in/on,
+ *   is/it, we/he, dog/dogs
+ * - one word starting with the other: child/children, play/played, the/they
+ *
+ * One-letter words ("a", "I") are skipped: one edit from them is most of the
+ * short words a grid has. Sound-alikes two letters apart (pair/pear,
+ * hear/here) stay on purpose: picking the right spelling is the practice.
+ * Irregular forms (find/found, child/kids) are not caught: when a week lists
+ * both, keep the other one out of that maze's sentence by hand.
+ */
+function couldStandIn(own: string, other: string): boolean {
+  if (own.length < 2) {
+    return false;
+  }
+  if (nearlySame(own, other)) {
+    return true;
+  }
+  const [shorter, longer] = own.length <= other.length ? [own, other] : [other, own];
+  return shorter.length >= 3 && longer.startsWith(shorter);
 }
 
 /** The words a child taps, in order. Trailing sentence punctuation is dropped, as in the workbook mazes. */
@@ -127,9 +149,9 @@ function findPath(length: number, random: () => number): Array<[number, number]>
  *
  * Distractors come from the same week -- its spelling words, then the other
  * mazes' words -- so the grid is practice with the words she is learning.
- * None of them matches a word in this sentence, ignoring case, or is one
- * letter away from one (see nearlySame), so a correct sentence can only be
- * traced one way.
+ * None of them matches a word in this sentence, ignoring case, or could stand
+ * in for one (see couldStandIn), so a correct sentence can only be traced one
+ * way.
  */
 export function buildMaze(week: Week, mazeIndex: number): Puzzle | null {
   const maze = week.mazes[mazeIndex];
@@ -153,7 +175,7 @@ export function buildMaze(week: Week, mazeIndex: number): Puzzle | null {
     const key = word.toLowerCase();
     // "I" stays capitalised; any other sentence-initial capital is dropped.
     const shown = key === "i" ? "I" : key;
-    if (word && !taken.has(key) && !sentenceKeys.some((own) => own.length > 2 && nearlySame(own, key))) {
+    if (word && !taken.has(key) && !sentenceKeys.some((own) => couldStandIn(own, key))) {
       taken.add(key);
       candidates.push(shown);
     }

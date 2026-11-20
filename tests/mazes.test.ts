@@ -66,8 +66,12 @@ function assertSolvableOneWay(puzzle: Puzzle, sentence: string, label: string) {
       const key = cell.toLowerCase();
       assert.ok(!sentenceKeys.includes(key), `${label}: off-path cell holds the sentence word "${cell}"`);
       for (const own of sentenceKeys) {
-        if (own.length > 2) {
+        if (own.length >= 2) {
           assert.ok(!withinOneEdit(own, key), `${label}: off-path "${cell}" is one letter from "${own}"`);
+        }
+        const [shorter, longer] = own.length <= key.length ? [own, key] : [key, own];
+        if (shorter.length >= 3) {
+          assert.ok(!longer.startsWith(shorter), `${label}: off-path "${cell}" is a form of "${own}"`);
         }
       }
     })
@@ -144,6 +148,32 @@ test("one-letter-off spelling words stay out of the grid (woman/women, hear/hear
   const puzzle = buildMaze(week, 0);
   assert.ok(puzzle);
   assertSolvableOneWay(puzzle, week.mazes[0].sentence, "near-match");
+});
+
+test("short words that swap for each other stay out of the grid (in/on, is/it, we/he)", () => {
+  const week = syntheticWeek(["We sat in the box and it is fun"], ["on", "he", "at", "if", "its", "his", "an", "as", "us", "box", "fix"]);
+  const puzzle = buildMaze(week, 0);
+  assert.ok(puzzle);
+  assertSolvableOneWay(puzzle, week.mazes[0].sentence, "short words");
+  const offPath = puzzle.grid.flat().filter((_, index) => !puzzle.solution_cells.some((cell) => (cell.row - 1) * 4 + cell.col - 1 === index));
+  for (const word of ["on", "he", "at", "its"]) {
+    assert.ok(!offPath.includes(word), `"${word}" should be kept out`);
+  }
+});
+
+test("other forms of a sentence word stay out of the grid (child/children, play/played)", () => {
+  const week = syntheticWeek(["The children like to play"], ["child", "played", "playing", "likes", "they", "then", "toy", "kite"]);
+  const puzzle = buildMaze(week, 0);
+  assert.ok(puzzle);
+  assertSolvableOneWay(puzzle, week.mazes[0].sentence, "forms");
+});
+
+test("sound-alikes two letters apart stay in as decoys (pair/pear)", () => {
+  const week = syntheticWeek(["I need a pair of socks"], ["pear", "pare", "sock", "knead"]);
+  const puzzle = buildMaze(week, 0);
+  assert.ok(puzzle);
+  assertSolvableOneWay(puzzle, week.mazes[0].sentence, "sound-alikes");
+  assert.ok(puzzle.grid.flat().includes("pear"), "pear is the practice: choosing the right spelling");
 });
 
 test("random sentences from 2 to 16 words always trace one way", () => {
