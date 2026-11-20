@@ -182,7 +182,9 @@ export function formatSpellingCustomListEntry(entry: SpellingWord) {
   const sentence = (entry.sentence ?? "").replace(/\s+/g, " ").trim();
 
   if (!sentence) {
-    return word;
+    // A bare line is split on spaces and commas when read back, so a word that
+    // holds one ("ice cream") keeps its semicolon to stay a single entry.
+    return /[\s,]/.test(word) ? `${word};` : word;
   }
 
   return `${word}; ${sentence}`;
