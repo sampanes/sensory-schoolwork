@@ -92,8 +92,10 @@ export function getDefaultPackIds(grade: Grade): readonly string[] {
  *
  * Ids that name no bank, or a bank above the active grade, are dropped: a
  * selection made at grade 2 must not smuggle Pack 6 into a grade 1 session.
- * If nothing survives, the grade default stands in, so a session always has
- * words even after a bank is renamed or removed.
+ * So is a bank with no words, such as a week whose list is not typed in yet.
+ * If nothing survives, the grade default stands in, and if that is empty too
+ * (this week has no words), the per-grade built-in list does, so a session
+ * always has words to spell.
  */
 export function resolveSelectedBanks(packIds: readonly string[], grade: Grade): readonly SpellingBank[] {
   const pick = (ids: readonly string[]) => {
@@ -101,11 +103,16 @@ export function resolveSelectedBanks(packIds: readonly string[], grade: Grade): 
     if (wanted.has(THIS_WEEK_ID) && CURRENT_WEEK_BANK) {
       wanted.add(CURRENT_WEEK_BANK.id);
     }
-    return getBanksForGrade(grade).filter((bank) => wanted.has(bank.id));
+    return getBanksForGrade(grade).filter((bank) => wanted.has(bank.id) && bank.words.length > 0);
   };
 
-  const selected = pick(packIds);
-  return selected.length > 0 ? selected : pick(getDefaultPackIds(grade));
+  for (const ids of [packIds, getDefaultPackIds(grade), DEFAULT_PACK_IDS_BY_GRADE[grade]]) {
+    const selected = pick(ids);
+    if (selected.length > 0) {
+      return selected;
+    }
+  }
+  return [];
 }
 
 /**

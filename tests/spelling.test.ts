@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  type SpellingBank,
   BUILTIN_BANKS,
   CURRENT_WEEK_BANK,
   THIS_WEEK_ID,
@@ -83,6 +84,25 @@ test("unknown or out-of-grade ids fall back to the grade default instead of an e
       assert.deepEqual(resolveSelectedBanks([higher.id], grade).map((bank) => bank.id), fallback);
     }
     assert.ok(resolveSelectedWords(["no-such-pack"], grade).length > 0);
+  }
+});
+
+test("a week with no words yet never leaves a round with nothing to spell", () => {
+  if (!CURRENT_WEEK_BANK) {
+    return;
+  }
+  const bank = CURRENT_WEEK_BANK as { words: SpellingBank["words"] };
+  const saved = bank.words;
+  bank.words = [];
+  try {
+    for (const grade of GRADES) {
+      for (const ids of [[], [THIS_WEEK_ID], [CURRENT_WEEK_BANK.id]]) {
+        assert.ok(resolveSelectedWords(ids, grade).length > 0, `grade ${grade}, ${JSON.stringify(ids)}: no words`);
+        assert.ok(!resolveSelectedBanks(ids, grade).includes(CURRENT_WEEK_BANK), "the empty week was picked");
+      }
+    }
+  } finally {
+    bank.words = saved;
   }
 });
 

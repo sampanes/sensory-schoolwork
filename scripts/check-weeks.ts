@@ -43,7 +43,9 @@ for (const week of WEEKS) {
   }
   ids.add(week.id);
 
-  if (week.words.length < 20 || week.words.length > 40) {
+  if (week.words.length === 0) {
+    error(`${where}: no words, so "This week" spelling falls back to the old built-in list`);
+  } else if (week.words.length < 20 || week.words.length > 40) {
     warn(`${where}: ${week.words.length} words (the ritual is about 30)`);
   }
 
