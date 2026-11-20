@@ -477,7 +477,7 @@
         [
           "will",
           "lift",
-          "the",
+          "tip",
           "fix"
         ],
         [
@@ -1308,13 +1308,13 @@
       "grid": [
         [
           "The",
-          "kite",
+          "kites",
           "can",
           "tale"
         ],
         [
           "rate",
-          "s",
+          "gate",
           "dive",
           "late"
         ],
@@ -1331,11 +1331,10 @@
           "wind"
         ]
       ],
-      "solution_sentence": "The kite s can dive in the wind.",
+      "solution_sentence": "The kites can dive in the wind.",
       "solution_words": [
         "The",
-        "kite",
-        "s",
+        "kites",
         "can",
         "dive",
         "in",
@@ -1349,10 +1348,6 @@
         },
         {
           "row": 1,
-          "col": 2
-        },
-        {
-          "row": 2,
           "col": 2
         },
         {
@@ -8368,8 +8363,8 @@
           "col": 1
         },
         {
-          "row": 2,
-          "col": 2
+          "row": 3,
+          "col": 1
         },
         {
           "row": 3,
@@ -10162,22 +10157,22 @@
           "wrist"
         ],
         [
-          "get",
-          "my",
+          "must",
+          "cast",
           "gust",
           "cost"
         ],
         [
-          "must",
+          "get",
+          "my",
           "list",
-          "done",
-          "fast"
+          "done"
         ],
         [
           "blast",
           "pest",
           "rest",
-          "cast"
+          "fast"
         ]
       ],
       "solution_sentence": "I must get my list done fast",
@@ -10196,16 +10191,12 @@
           "col": 1
         },
         {
+          "row": 2,
+          "col": 1
+        },
+        {
           "row": 3,
           "col": 1
-        },
-        {
-          "row": 2,
-          "col": 1
-        },
-        {
-          "row": 2,
-          "col": 2
         },
         {
           "row": 3,
@@ -10217,6 +10208,10 @@
         },
         {
           "row": 3,
+          "col": 4
+        },
+        {
+          "row": 4,
           "col": 4
         }
       ]
@@ -10454,9 +10449,9 @@
         ],
         [
           "soft",
-          "gift",
           "to",
-          "sea"
+          "sea",
+          "gift"
         ]
       ],
       "solution_sentence": "The raft will drift to sea",
@@ -10487,11 +10482,11 @@
         },
         {
           "row": 4,
-          "col": 3
+          "col": 2
         },
         {
           "row": 4,
-          "col": 4
+          "col": 3
         }
       ]
     },
@@ -14173,14 +14168,14 @@
         [
           "ice",
           "pace",
-          "slice",
-          "trace"
+          "trace",
+          "slice"
         ],
         [
           "space",
           "vice",
-          "of",
-          "cake"
+          "cake",
+          "of"
         ],
         [
           "face",
@@ -14218,15 +14213,15 @@
         },
         {
           "row": 2,
-          "col": 3
-        },
-        {
-          "row": 3,
-          "col": 3
+          "col": 4
         },
         {
           "row": 3,
           "col": 4
+        },
+        {
+          "row": 3,
+          "col": 3
         }
       ]
     },
