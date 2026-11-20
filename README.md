@@ -74,14 +74,21 @@ export const WEEK_2026_11_16: Week = {
 
 - `words` becomes a spelling list. The newest week is "This week" on the `Configurations` page,
   and it is the default at every grade, so a new Monday list takes over on its own. Older weeks
-  fold into "Past weeks".
+  fold into "Past weeks". A phone set to "Type my own" under Word list keeps its typed list
+  instead; switch it back to "Use packs" to get the Monday words.
 - `mazes` become that week's sentence mazes. Only the sentence is written: the 4x4 grid, a path
   from the top-left corner, and the distractor words (drawn from the same week) are built when
   the page loads, by [src/weekly/mazes.ts](src/weekly/mazes.ts). Keep each sentence to 4-9
   words with no commas. The maze screen opens on "This week" and keeps a separate progress for
-  each week, apart from the workbook.
+  each week, apart from the workbook. A distractor never repeats a sentence word or a near form
+  of one (woman/women, in/on, play/played), so a right sentence traces only one way;
+  sound-alikes like pair/pear do appear, since picking the right spelling is the practice.
 
 Never rename a week's `id` once it is live: saved selections and maze progress are keyed on it.
+Maze progress is also saved by position, so in a live week add a new maze at the end of `mazes`,
+and never reorder or delete one.
+
+Run `npm run check` before pushing a new week (see [Checks](#checks)); the deploy runs it too.
 
 ### Archived banks
 
