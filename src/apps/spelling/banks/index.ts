@@ -137,6 +137,29 @@ export function resolveSelectedWords(packIds: readonly string[], grade: Grade): 
   return words;
 }
 
+/**
+ * Words for the review tail of a round: the `weeksBack` weeks before the
+ * current one, newest first, minus anything already in the main pool (so a
+ * word that comes back on a later list is not drilled twice in one sitting).
+ * Empty until there is at least one past week.
+ */
+export function resolveReviewWords(weeksBack: number, mainPool: readonly SpellingWord[]): SpellingWord[] {
+  const seen = new Set(mainPool.map((entry) => entry.word.trim().toLowerCase()));
+  const words: SpellingWord[] = [];
+
+  for (const bank of WEEKLY_BANKS.slice(1, 1 + Math.max(0, weeksBack))) {
+    for (const entry of bank.words) {
+      const key = entry.word.trim().toLowerCase();
+      if (key && !seen.has(key)) {
+        seen.add(key);
+        words.push(entry);
+      }
+    }
+  }
+
+  return words;
+}
+
 /** A short name for the current selection, for the spelling screen's header. */
 export function describeSelection(packIds: readonly string[], grade: Grade): string {
   const banks = resolveSelectedBanks(packIds, grade);

@@ -13,6 +13,17 @@ export const SPELLING_SOURCE_STORAGE_KEY = "spelling.source";
 export const SPELLING_PACK_IDS_STORAGE_KEY = "spelling.packIds.v2";
 const LEGACY_SPELLING_PACK_IDS_STORAGE_KEY = "spelling.packIds";
 export const SPELLING_ROUND_LENGTH_STORAGE_KEY = "spelling.roundLength";
+export const SPELLING_REVIEW_COUNT_STORAGE_KEY = "spelling.reviewCount";
+export const SPELLING_REVIEW_WEEKS_STORAGE_KEY = "spelling.reviewWeeks";
+
+/*
+ * Review: after the main round, a few words from the weeks before this one.
+ * Fixed choices rather than sliders -- it is a "turn it on when she is ready"
+ * switch, not something to fine-tune. 0 is off, and off is the default.
+ */
+export const SPELLING_REVIEW_COUNTS = [0, 5, 10, 15] as const;
+export const SPELLING_REVIEW_WEEK_OPTIONS = [1, 2, 4] as const;
+export const DEFAULT_SPELLING_REVIEW_WEEKS = 2;
 
 /**
  * Where a session gets its words. "packs" is the everyday path; "typed" is the
@@ -107,6 +118,41 @@ export function setStoredSpellingRoundLength(length: number) {
 
   const bounded = Math.min(Math.max(Math.floor(length), MIN_SPELLING_ROUND_LENGTH), MAX_SPELLING_ROUND_LENGTH);
   window.localStorage.setItem(SPELLING_ROUND_LENGTH_STORAGE_KEY, String(bounded));
+}
+
+function getStoredChoice(key: string, allowed: readonly number[], fallback: number): number {
+  if (typeof window === "undefined") {
+    return fallback;
+  }
+
+  const parsed = Number.parseInt(window.localStorage.getItem(key) ?? "", 10);
+  return allowed.includes(parsed) ? parsed : fallback;
+}
+
+/** Review words added after the main round. 0 means review is off. */
+export function getStoredSpellingReviewCount(): number {
+  return getStoredChoice(SPELLING_REVIEW_COUNT_STORAGE_KEY, SPELLING_REVIEW_COUNTS, 0);
+}
+
+export function setStoredSpellingReviewCount(count: number) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(SPELLING_REVIEW_COUNT_STORAGE_KEY, String(count));
+}
+
+/** How many weeks back, before this one, review words come from. */
+export function getStoredSpellingReviewWeeks(): number {
+  return getStoredChoice(SPELLING_REVIEW_WEEKS_STORAGE_KEY, SPELLING_REVIEW_WEEK_OPTIONS, DEFAULT_SPELLING_REVIEW_WEEKS);
+}
+
+export function setStoredSpellingReviewWeeks(weeks: number) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(SPELLING_REVIEW_WEEKS_STORAGE_KEY, String(weeks));
 }
 
 export function getStoredSpellingCustomListEnabled() {

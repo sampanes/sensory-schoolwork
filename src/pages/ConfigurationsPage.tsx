@@ -19,9 +19,15 @@ import {
   formatSpellingCustomListEntry,
   getStoredSpellingCustomListText,
   getStoredSpellingPackIds,
+  getStoredSpellingReviewCount,
+  getStoredSpellingReviewWeeks,
   getStoredSpellingRoundLength,
   getStoredSpellingSource,
   MAX_SPELLING_ROUND_LENGTH,
+  SPELLING_REVIEW_COUNTS,
+  SPELLING_REVIEW_WEEK_OPTIONS,
+  setStoredSpellingReviewCount,
+  setStoredSpellingReviewWeeks,
   MIN_SPELLING_ROUND_LENGTH,
   parseSpellingCustomList,
   serializeSpellingCustomList,
@@ -35,11 +41,12 @@ import {
   CURRENT_WEEK_BANK,
   THIS_WEEK_ID,
   WEEKLY_BANKS,
-  describeSelection,
   getBanksForGrade,
+  getDefaultPackIds,
+  resolveReviewWords,
   resolveSelectedWords,
 } from "../apps/spelling/banks";
-import { getStoredGrade, gradeLabel } from "../utils/gradePreferences";
+import { getStoredGrade } from "../utils/gradePreferences";
 import { cn } from "../utils/cn";
 
 const SPELLING_SOURCES: readonly { value: SpellingSource; label: string }[] = [
@@ -508,6 +515,8 @@ export default function ConfigurationsPage() {
   const [spellingSource, setSpellingSource] = useState<SpellingSource>("packs");
   const [spellingPackIds, setSpellingPackIds] = useState<string[]>([]);
   const [spellingRoundLength, setSpellingRoundLength] = useState(getStoredSpellingRoundLength);
+  const [spellingReviewCount, setSpellingReviewCount] = useState(getStoredSpellingReviewCount);
+  const [spellingReviewWeeks, setSpellingReviewWeeks] = useState(getStoredSpellingReviewWeeks);
   const [spellingCustomListEntries, setSpellingCustomListEntries] = useState(parseSpellingCustomList(getStoredSpellingCustomListText()));
   const [spellingCustomListDraft, setSpellingCustomListDraft] = useState("");
   const [expandedSection, setExpandedSection] = useState<MathSectionKey>(null);
@@ -543,6 +552,8 @@ export default function ConfigurationsPage() {
     setSpellingSource(getStoredSpellingSource());
     setSpellingPackIds(getStoredSpellingPackIds());
     setSpellingRoundLength(getStoredSpellingRoundLength());
+    setSpellingReviewCount(getStoredSpellingReviewCount());
+    setSpellingReviewWeeks(getStoredSpellingReviewWeeks());
   }, []);
 
   useEffect(() => {
@@ -596,7 +607,29 @@ export default function ConfigurationsPage() {
     spellingSource === "typed" && parsedCustomSpellingWords.length > 0
       ? parsedCustomSpellingWords.length
       : selectedPackWords.length;
-  const spellingRoundSummary = `${Math.min(spellingRoundLength, Math.max(spellingPoolSize, 1))} of ${spellingPoolSize} words`;
+  /*
+   * A round can never be longer than the pool, so the slider stops there: a
+   * 30-word week with the slider on 50 just means all 30, and should say so.
+   */
+  const spellingRoundMax = Math.max(MIN_SPELLING_ROUND_LENGTH, Math.min(MAX_SPELLING_ROUND_LENGTH, spellingPoolSize));
+  const spellingRoundPresets = [...new Set([10, 15, 20, 30, spellingRoundMax])]
+    .filter((preset) => preset <= spellingRoundMax)
+    .sort((a, b) => a - b);
+
+  const reviewPool = useMemo(
+    () => resolveReviewWords(spellingReviewWeeks, selectedPackWords),
+    [spellingReviewWeeks, selectedPackWords]
+  );
+  const reviewWordsInRound = spellingSource === "packs" ? Math.min(spellingReviewCount, reviewPool.length) : 0;
+  const spellingRoundSummary =
+    `${Math.min(spellingRoundLength, Math.max(spellingPoolSize, 1))} of ${spellingPoolSize} words` +
+    (reviewWordsInRound > 0 ? ` + ${reviewWordsInRound} review` : "");
+
+  /*
+   * With nothing saved, the session uses the default (this week's list). Show
+   * that as ticked, so the boxes always match what she will actually get.
+   */
+  const effectivePackIds = spellingPackIds.length > 0 ? spellingPackIds : [...getDefaultPackIds(grade)];
 
   const commitSpellingCustomListEntries = (entries: typeof spellingCustomListEntries) => {
     setSpellingCustomListEntries(entries);
@@ -604,15 +637,22 @@ export default function ConfigurationsPage() {
   };
 
   const toggleSpellingPack = (packId: string) => {
-    const next = spellingPackIds.includes(packId)
-      ? spellingPackIds.filter((id) => id !== packId)
-      : [...spellingPackIds, packId];
+    const next = effectivePackIds.includes(packId)
+      ? effectivePackIds.filter((id) => id !== packId)
+      : [...effectivePackIds, packId];
+    /*
+     * The last ticked list stays ticked. Clearing it would only fall back to
+     * the default, and a box that springs back on looks broken.
+     */
+    if (next.length === 0) {
+      return;
+    }
     setSpellingPackIds(next);
     setStoredSpellingPackIds(next);
   };
 
   const renderPackToggle = (packId: string, label: string, wordCount: number, note?: string) => {
-    const checked = spellingPackIds.includes(packId);
+    const checked = effectivePackIds.includes(packId);
     return (
       <button
         key={packId}
@@ -663,7 +703,7 @@ export default function ConfigurationsPage() {
     expanded: boolean,
     setExpanded: (next: boolean) => void
   ) => {
-    const tickedCount = banks.filter((bank) => spellingPackIds.includes(bank.id)).length;
+    const tickedCount = banks.filter((bank) => effectivePackIds.includes(bank.id)).length;
     return (
       <div className="mt-3">
         <button
@@ -1127,10 +1167,7 @@ export default function ConfigurationsPage() {
                       : null}
 
                     <p className="mt-3 text-xs text-zinc-500">
-                      {spellingPackIds.length === 0
-                        ? `Nothing ticked, so ${gradeLabel(grade)} falls back to ${describeSelection([], grade)}.`
-                        : "Tick as many as you want; they shuffle together into one pool."}{" "}
-                      Change the level on the home page to see other grades.
+                      Tick more than one and they shuffle together into one pool.
                     </p>
 
                     <div className="mt-4">
@@ -1138,14 +1175,74 @@ export default function ConfigurationsPage() {
                         title="Words per round"
                         value={spellingRoundLength}
                         min={MIN_SPELLING_ROUND_LENGTH}
-                        max={MAX_SPELLING_ROUND_LENGTH}
-                        presets={[10, 15, 20, 30]}
+                        max={spellingRoundMax}
+                        presets={spellingRoundPresets}
                         onChange={(next) => {
                           setSpellingRoundLength(next);
                           setStoredSpellingRoundLength(next);
                         }}
                       />
                     </div>
+
+                    {CURRENT_WEEK_BANK ? (
+                      <div className="mt-4 rounded-2xl border border-zinc-200 bg-white p-4">
+                        <div className="text-sm font-semibold text-zinc-900">Then review</div>
+                        <p className="mt-1 text-xs text-zinc-500">
+                          After the round, a few words from earlier weeks. Turn it on when this week feels easy.
+                        </p>
+                        <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Review words">
+                          {SPELLING_REVIEW_COUNTS.map((count) => (
+                            <button
+                              key={count}
+                              type="button"
+                              aria-pressed={spellingReviewCount === count}
+                              onClick={() => {
+                                setSpellingReviewCount(count);
+                                setStoredSpellingReviewCount(count);
+                              }}
+                              className={cn(
+                                "rounded-full border px-3 py-1.5 text-sm font-medium transition",
+                                spellingReviewCount === count
+                                  ? "border-zinc-950 bg-zinc-950 text-white"
+                                  : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
+                              )}
+                            >
+                              {count === 0 ? "Off" : `${count} words`}
+                            </button>
+                          ))}
+                        </div>
+                        {spellingReviewCount > 0 ? (
+                          <>
+                            <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Weeks to review">
+                              {SPELLING_REVIEW_WEEK_OPTIONS.map((weeks) => (
+                                <button
+                                  key={weeks}
+                                  type="button"
+                                  aria-pressed={spellingReviewWeeks === weeks}
+                                  onClick={() => {
+                                    setSpellingReviewWeeks(weeks);
+                                    setStoredSpellingReviewWeeks(weeks);
+                                  }}
+                                  className={cn(
+                                    "rounded-full border px-3 py-1.5 text-sm font-medium transition",
+                                    spellingReviewWeeks === weeks
+                                      ? "border-zinc-950 bg-zinc-950 text-white"
+                                      : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
+                                  )}
+                                >
+                                  {weeks === 1 ? "Last week" : `Last ${weeks} weeks`}
+                                </button>
+                              ))}
+                            </div>
+                            <p className="mt-2 text-xs text-zinc-500">
+                              {reviewPool.length === 0
+                                ? "No earlier weeks yet. Review starts once next Monday's list is in."
+                                : `${reviewPool.length} words to draw from.`}
+                            </p>
+                          </>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </>
                 ) : (
                   <>

@@ -5,7 +5,7 @@ import {
   loadHandwritingModel,
   recognizeCanvas,
 } from "./handwritingModel";
-import { describeSelection, resolveSelectedWords } from "./banks";
+import { describeSelection, resolveReviewWords, resolveSelectedWords } from "./banks";
 import type { SpellingWord } from "./spellingWords";
 import { generateTemplateSentence } from "./sentenceGen/templates";
 import WritingCanvas, { type WritingCanvasHandle } from "../../components/WritingCanvas";
@@ -15,6 +15,8 @@ import { getPreferredSpellingVoice } from "../../utils/speechPreferences";
 import {
   getStoredSpellingCustomListText,
   getStoredSpellingPackIds,
+  getStoredSpellingReviewCount,
+  getStoredSpellingReviewWeeks,
   getStoredSpellingRoundLength,
   getStoredSpellingSource,
   parseSpellingCustomList,
@@ -25,6 +27,8 @@ type FeedbackState = "idle" | "success" | "wrong" | "sloppy" | "word";
 type PlaylistWord = {
   word: string;
   sentence: string;
+  /** From an earlier week, added after the main round. */
+  review: boolean;
 };
 
 const CONFIDENCE_THRESHOLD = 0.35;
@@ -56,41 +60,71 @@ function percent(value: number) {
  * One function so the header can never disagree with the playlist about which
  * list is loaded.
  */
-function resolveActiveList(grade: Grade): { words: SpellingWord[]; label: string } {
+function resolveActiveList(grade: Grade): { words: SpellingWord[]; label: string; fromPacks: boolean } {
   /*
    * The typed list is used only when it is the chosen source AND has words in
    * it, so an empty editor cannot leave a session with nothing to spell.
    */
   const typedWords = parseSpellingCustomList(getStoredSpellingCustomListText());
   if (getStoredSpellingSource() === "typed" && typedWords.length > 0) {
-    return { words: typedWords, label: "My list" };
+    return { words: typedWords, label: "My list", fromPacks: false };
   }
 
   const packIds = getStoredSpellingPackIds();
-  return { words: resolveSelectedWords(packIds, grade), label: describeSelection(packIds, grade) };
+  return {
+    words: resolveSelectedWords(packIds, grade),
+    label: describeSelection(packIds, grade),
+    fromPacks: true,
+  };
 }
 
-function buildPlaylist(grade: Grade): PlaylistWord[] {
-  const baseWords = resolveActiveList(grade).words;
-  const playlist: PlaylistWord[] = baseWords.map((entry) => ({
+function shuffle<T>(items: T[]): T[] {
+  for (let i = items.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [items[i], items[j]] = [items[j], items[i]];
+  }
+  return items;
+}
+
+function toPlaylistWord(entry: SpellingWord, review: boolean): PlaylistWord {
+  return {
     word: entry.word,
     sentence:
       entry.sentence && entry.sentence.trim().length > 0
         ? entry.sentence
         : generateTemplateSentence(entry.word),
-  }));
+    review,
+  };
+}
 
-  for (let i = playlist.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [playlist[i], playlist[j]] = [playlist[j], playlist[i]];
-  }
+function buildPlaylist(grade: Grade): PlaylistWord[] {
+  const active = resolveActiveList(grade);
 
   /*
    * Shuffle first, then take a round's worth. Several packs together are a
    * pool to draw from, not one sitting: ticking three of them should not mean
    * ninety words before she is allowed to stop.
    */
-  return playlist.slice(0, Math.max(1, getStoredSpellingRoundLength()));
+  const main = shuffle(active.words.map((entry) => toPlaylistWord(entry, false))).slice(
+    0,
+    Math.max(1, getStoredSpellingRoundLength())
+  );
+
+  /*
+   * Review comes after the main round, never mixed into it, so this week's
+   * words always get her freshest attention. A typed list is a one-off from a
+   * sheet of paper and skips review.
+   */
+  const reviewCount = active.fromPacks ? getStoredSpellingReviewCount() : 0;
+  const review =
+    reviewCount > 0
+      ? shuffle(resolveReviewWords(getStoredSpellingReviewWeeks(), active.words).map((entry) => toPlaylistWord(entry, true))).slice(
+          0,
+          reviewCount
+        )
+      : [];
+
+  return [...main, ...review];
 }
 
 export default function App() {
@@ -523,6 +557,9 @@ export default function App() {
                     </svg>
                   </Link>
                   <span className="shrink-0">{wordIndex + 1}/{activeWords.length}</span>
+                  {currentWordEntry.review && !isFinished ? (
+                    <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">Review</span>
+                  ) : null}
                 </span>
                 <span>{Math.max(letterIndex, 0)}/{currentWord.length}</span>
               </div>
@@ -532,8 +569,10 @@ export default function App() {
                   Positions are playlist indices, not positions in the pack: a
                   round is a slice of a shuffled pool, so pack positions can
                   run past the number of dots and would light the wrong ones.
+                  Review words at the end are amber, so the main round reads
+                  as its own finish line.
                 */}
-                {activeWords.map((_, playlistIdx) => {
+                {activeWords.map((entry, playlistIdx) => {
                   const completed = isFinished || playlistIdx < wordIndex;
                   const isCurrent = !isFinished && playlistIdx === wordIndex;
                   return (
@@ -541,11 +580,17 @@ export default function App() {
                       key={playlistIdx}
                       className={cn(
                         "h-2 w-2 rounded-full transition-colors",
-                        completed
-                          ? "bg-violet-500"
-                          : isCurrent
-                            ? "bg-violet-200 ring-2 ring-violet-400"
-                            : "bg-slate-200"
+                        entry.review
+                          ? completed
+                            ? "bg-amber-500"
+                            : isCurrent
+                              ? "bg-amber-200 ring-2 ring-amber-400"
+                              : "bg-amber-100"
+                          : completed
+                            ? "bg-violet-500"
+                            : isCurrent
+                              ? "bg-violet-200 ring-2 ring-violet-400"
+                              : "bg-slate-200"
                       )}
                     />
                   );
