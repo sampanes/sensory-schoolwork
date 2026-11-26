@@ -142,12 +142,19 @@ export function resolveSelectedWords(packIds: readonly string[], grade: Grade): 
  * current one, newest first, minus anything already in the main pool (so a
  * word that comes back on a later list is not drilled twice in one sitting).
  * Empty until there is at least one past week.
+ *
+ * `weeklyBanks` is newest first, with this week at index 0; it defaults to the
+ * real weeks and is a parameter only so tests can pass made-up ones.
  */
-export function resolveReviewWords(weeksBack: number, mainPool: readonly SpellingWord[]): SpellingWord[] {
+export function resolveReviewWords(
+  weeksBack: number,
+  mainPool: readonly SpellingWord[],
+  weeklyBanks: readonly SpellingBank[] = WEEKLY_BANKS
+): SpellingWord[] {
   const seen = new Set(mainPool.map((entry) => entry.word.trim().toLowerCase()));
   const words: SpellingWord[] = [];
 
-  for (const bank of WEEKLY_BANKS.slice(1, 1 + Math.max(0, weeksBack))) {
+  for (const bank of weeklyBanks.slice(1, 1 + Math.max(0, weeksBack))) {
     for (const entry of bank.words) {
       const key = entry.word.trim().toLowerCase();
       if (key && !seen.has(key)) {

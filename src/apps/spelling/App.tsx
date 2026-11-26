@@ -7,6 +7,7 @@ import {
 } from "./handwritingModel";
 import { describeSelection, resolveReviewWords, resolveSelectedWords } from "./banks";
 import type { SpellingWord } from "./spellingWords";
+import { composeRound } from "./round";
 import { generateTemplateSentence } from "./sentenceGen/templates";
 import WritingCanvas, { type WritingCanvasHandle } from "../../components/WritingCanvas";
 import { cn } from "../../utils/cn";
@@ -78,53 +79,21 @@ function resolveActiveList(grade: Grade): { words: SpellingWord[]; label: string
   };
 }
 
-function shuffle<T>(items: T[]): T[] {
-  for (let i = items.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [items[i], items[j]] = [items[j], items[i]];
-  }
-  return items;
-}
+function buildPlaylist(grade: Grade): PlaylistWord[] {
+  const active = resolveActiveList(grade);
 
-function toPlaylistWord(entry: SpellingWord, review: boolean): PlaylistWord {
-  return {
+  // A typed list is a one-off from a sheet of paper and skips review.
+  const reviewCount = active.fromPacks ? getStoredSpellingReviewCount() : 0;
+  const reviewPool = reviewCount > 0 ? resolveReviewWords(getStoredSpellingReviewWeeks(), active.words) : [];
+
+  return composeRound(active.words, reviewPool, getStoredSpellingRoundLength(), reviewCount).map((entry) => ({
     word: entry.word,
     sentence:
       entry.sentence && entry.sentence.trim().length > 0
         ? entry.sentence
         : generateTemplateSentence(entry.word),
-    review,
-  };
-}
-
-function buildPlaylist(grade: Grade): PlaylistWord[] {
-  const active = resolveActiveList(grade);
-
-  /*
-   * Shuffle first, then take a round's worth. Several packs together are a
-   * pool to draw from, not one sitting: ticking three of them should not mean
-   * ninety words before she is allowed to stop.
-   */
-  const main = shuffle(active.words.map((entry) => toPlaylistWord(entry, false))).slice(
-    0,
-    Math.max(1, getStoredSpellingRoundLength())
-  );
-
-  /*
-   * Review comes after the main round, never mixed into it, so this week's
-   * words always get her freshest attention. A typed list is a one-off from a
-   * sheet of paper and skips review.
-   */
-  const reviewCount = active.fromPacks ? getStoredSpellingReviewCount() : 0;
-  const review =
-    reviewCount > 0
-      ? shuffle(resolveReviewWords(getStoredSpellingReviewWeeks(), active.words).map((entry) => toPlaylistWord(entry, true))).slice(
-          0,
-          reviewCount
-        )
-      : [];
-
-  return [...main, ...review];
+    review: entry.review,
+  }));
 }
 
 export default function App() {

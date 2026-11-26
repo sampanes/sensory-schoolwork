@@ -74,8 +74,9 @@ export const WEEK_2026_11_16: Week = {
 
 - `words` becomes a spelling list. The newest week is "This week" on the `Configurations` page,
   and it is the default at every grade, so a new Monday list takes over on its own. Older weeks
-  fold into "Past weeks". A phone set to "Type my own" under Word list keeps its typed list
-  instead; switch it back to "Use packs" to get the Monday words.
+  fold into "Past weeks". "Then review" (off by default) adds 5-15 words from the last 1-4 weeks
+  after the main round, skipping any already in it. A phone set to "Type my own" under Word list
+  keeps its typed list instead; switch it back to "Use packs" to get the Monday words.
 - `mazes` become that week's sentence mazes. Only the sentence is written: the 4x4 grid, a path
   from the top-left corner, and the distractor words (drawn from the same week) are built when
   the page loads, by [src/weekly/mazes.ts](src/weekly/mazes.ts). Keep each sentence to 4-9
